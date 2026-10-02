@@ -1,0 +1,54 @@
+{
+  "name": "HEMOCAX WhatsApp Cloud API",
+  "nodes": [
+    {
+      "parameters": {"httpMethod": "POST", "path": "hemocax-whatsapp", "responseMode": "onReceived"},
+      "id": "hemocax-inbound",
+      "name": "Webhook HEMOCAX",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/{{$env.WHATSAPP_API_VERSION || 'v22.0'}}/{{$env.WHATSAPP_PHONE_NUMBER_ID}}/messages",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "=Bearer {{$env.WHATSAPP_ACCESS_TOKEN}}"}, {"name": "Content-Type", "value": "application/json"}]},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $json.body?.phone || $json.phone, type: 'text', text: { body: $json.body?.message || $json.message } }) }}",
+        "options": {"response": {"response": {"neverError": true}}}
+      },
+      "id": "hemocax-send",
+      "name": "Enviar WhatsApp Cloud API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.HEMOCAX_API_URL}}/api/communications/webhook",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "x-hemocax-webhook-secret", "value": "={{$env.N8N_WEBHOOK_SECRET}}"}, {"name": "Content-Type", "value": "application/json"}]},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ communication_id: $('Webhook HEMOCAX').first().json.body?.communication_id || $('Webhook HEMOCAX').first().json.communication_id, status: $json.messages?.[0]?.id ? 'SENT' : 'FAILED', external_id: $json.messages?.[0]?.id || null, error_message: $json.error?.message || null }) }}"
+      },
+      "id": "hemocax-status",
+      "name": "Registrar resultado en HEMOCAX",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [790, 300]
+    }
+  ],
+  "connections": {
+    "Webhook HEMOCAX": {"main": [[{"node": "Enviar WhatsApp Cloud API", "type": "main", "index": 0}]]},
+    "Enviar WhatsApp Cloud API": {"main": [[{"node": "Registrar resultado en HEMOCAX", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "hemocax-mvp-v2"
+}
