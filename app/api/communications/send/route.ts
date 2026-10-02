@@ -1,24 +1,8 @@
 import { NextResponse } from 'next/server';
+import { deliverCommunication } from '@/lib/communications';
 import { bearerToken, createServiceRoleClient, createUserScopedClient } from '@/lib/supabase/server';
 
-async function dispatchToWorker(payload: {
-  communication_id: number; donor_id: number; email: string; recipient_name: string; message: string; type: string;
-}) {
-  const url = process.env.AUTOMATION_WEBHOOK_URL;
-  const secret = process.env.AUTOMATION_WEBHOOK_SECRET || '';
-  if (!url) return { dispatched: false as const };
-  try {
-    const response = await fetch(`${url.replace(/\/$/, '')}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-hemocax-webhook-secret': secret },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) throw new Error(`El servicio de correo respondió HTTP ${response.status}`);
-    return { dispatched: true as const };
-  } catch (e) {
-    return { dispatched: true as const, error: e instanceof Error ? e.message : 'Error desconocido' };
-  }
-}
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   let token: string;
@@ -67,31 +51,16 @@ export async function POST(request: Request) {
     .single();
   if (insertError || !row) return NextResponse.json({ error: insertError?.message || 'No se pudo registrar la comunicación.' }, { status: 500 });
 
-  const { dispatched, error: dispatchError } = await dispatchToWorker({
-    communication_id: row.id,
-    donor_id: donor.id,
-    email: donor.email,
-    recipient_name: donor.first_name,
-    message,
-    type,
-  });
-  if (!dispatched) {
-    await caller.from('communications').update({ status: 'DEMO_QUEUED' }).eq('id', row.id);
-    row.status = 'DEMO_QUEUED';
-  } else if (dispatchError) {
-    await caller.from('communications').update({ status: 'FAILED', error_message: dispatchError }).eq('id', row.id);
-    row.status = 'FAILED';
-    row.error_message = dispatchError;
-  }
-
   const service = createServiceRoleClient();
+  const result = await deliverCommunication(service, row);
+
   await service.from('audit_logs').insert({
     actor_id: callerUser.user.id,
     action: 'COMMUNICATION_CREATED',
     entity: 'communication',
     entity_id: row.id,
-    detail: { type, donor_id: donorId },
+    detail: { type, donor_id: donorId, status: result.status },
   });
 
-  return NextResponse.json(row, { status: 201 });
+  return NextResponse.json({ ...row, status: result.status, error_message: result.error ?? null }, { status: 201 });
 }

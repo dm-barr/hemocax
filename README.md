@@ -14,7 +14,11 @@ El portal convierte el DNI de ocho dígitos al identificador de acceso `dni-<DNI
 
 El esquema limita sangre total a 4 donaciones/año para sexo M y 3 para sexo F, con protección en base de datos ante registros simultáneos. El intervalo entre donaciones de 90 días sigue siendo solo un valor provisional de configuración: la elegibilidad individual debe confirmarla el personal clínico. Resultados críticos no se muestran en el portal; solo personal con autorización puede liberar los no críticos.
 
-## Automatizaciones Python y correo
+## Envío de correos y automatizaciones
+
+**Quién envía:** el propio portal (Vercel) manda los correos por SMTP con `nodemailer` (`lib/email.ts`), tanto los manuales y de campaña como los automáticos. No se hace desde Render: el plan gratis de Render bloquea el SMTP saliente (`Network is unreachable`). Variables necesarias en Vercel: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_USE_TLS`, `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` y `AUTOMATION_DRY_RUN=false` (cualquier otro valor simula el envío y no sale nada).
+
+**Quién programa:** `automations/worker.py` solo se usa como reloj para los recordatorios automáticos; llama a `/api/automations/run` del portal a la hora de cada tarea. Su parte de envío por SMTP (`/email`) ya no se usa en producción. Descripción del worker:
 
 El servicio en `automations/worker.py` reemplaza n8n: cumpleaños 08:00, recordatorio de retorno 08:15, agradecimientos 08:30 y reconocimiento anual 08:45, en `America/Lima`. Usa solo la biblioteca estándar de Python (`smtplib`/`email`, sin dependencias nuevas). Para correrlo localmente, inicia la app, configura los secretos en `.env` y ejecuta `python automations/worker.py`; su estado se ve en `http://localhost:8787/health`. `python automations/worker.py --once BIRTHDAY` permite consultar candidatos manualmente. También puedes correrlo en Docker con `docker compose up -d --build automations`. El callback local usa `AUTOMATION_WEBHOOK_URL=http://localhost:8787/email` y los mismos secretos compartidos en `.env`.
 
