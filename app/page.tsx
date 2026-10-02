@@ -5,7 +5,7 @@ import { getBrowserSupabaseClient } from '@/lib/supabase/client';
 import StaffPanel from './staff/StaffPanel';
 
 type UserProfile = { dni: string; full_name: string; role: 'ADMIN' | 'STAFF' | 'DONOR'; can_release_results: boolean };
-type Donor = { id: number; first_name: string; last_name: string; gender: 'M' | 'F'; blood_type: string; rh_factor: string; consent_email: boolean; opted_out: boolean };
+type Donor = { id: number; first_name: string; last_name: string; gender: 'M' | 'F'; blood_type: string | null; rh_factor: string | null; consent_email: boolean; opted_out: boolean };
 type Donation = { id: number; donation_date: string; donation_type: string };
 type Result = { id: number; status: string; available_at: string | null; donor_message: string | null; donations: { donation_date: string } | null };
 
@@ -81,7 +81,7 @@ export default function Home() {
   if (profile.role !== 'DONOR') return <StaffPanel profile={profile} onLogout={logout} />;
 
   return <main className="portal"><aside className="sidebar"><Brand /><div className="nav-active">◉　 Mi portal</div><div className="side-note">HRDC · Banco de Sangre</div></aside><section className="content"><header className="topbar"><div><span className="eyebrow">PORTAL DEL DONANTE</span><div className="greeting">Hola, {donor?.first_name ?? profile.full_name}</div></div><button onClick={logout}>Cerrar sesión</button></header>
-    <div className="intro"><div><h1>Tu donación, en un solo lugar</h1><p className="muted">Consulta tu historial y mantén tus datos al día.</p></div><div className="blood">{donor?.blood_type}{donor?.rh_factor}<small>GRUPO SANGUÍNEO</small></div></div>
+    <div className="intro"><div><h1>Tu donación, en un solo lugar</h1><p className="muted">Consulta tu historial y mantén tus datos al día.</p></div><div className="blood">{donor?.blood_type ? `${donor.blood_type}${donor.rh_factor}` : '—'}<small>GRUPO SANGUÍNEO</small></div></div>
     {error && <p className="error" role="alert">{error}</p>}
     <div className="metrics"><article><span className="eyebrow">DONACIONES ESTE AÑO</span><strong>{currentYearDonations}<span className="metric-total"> / {annualLimit}</span></strong><small>máximo anual de sangre total</small></article><article><span className="eyebrow">HISTORIAL TOTAL</span><strong>{donations.length}</strong><small>donaciones registradas</small></article><article><span className="eyebrow">RESULTADOS</span><strong>{results.filter(r => ['AVAILABLE','NOTIFIED','CONSULTED'].includes(r.status)).length}</strong><small>disponibles en el portal</small></article></div>
     <div className="columns"><section className="panel"><div className="panel-head"><div><h2>Mis donaciones</h2><p>Tu historial reciente</p></div></div>{donations.length ? <div className="rows">{donations.map(d => <div className="row" key={d.id}><span className="row-icon">＋</span><span><b>Donación de sangre</b><small>{new Date(`${d.donation_date}T00:00:00`).toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'})}</small></span><span className="tag">Registrada</span></div>)}</div> : <p className="empty">Aún no hay donaciones en tu historial.</p>}</section>

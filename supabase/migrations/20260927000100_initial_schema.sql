@@ -13,8 +13,8 @@ create table public.donors (
   birth_date date not null,
   phone text not null,
   email text,
-  blood_type text not null check (blood_type in ('O','A','B','AB')),
-  rh_factor text not null check (rh_factor in ('+','-')),
+  blood_type text check (blood_type in ('O','A','B','AB')),
+  rh_factor text check (rh_factor in ('+','-')),
   status text not null default 'ACTIVE' check (status in ('ACTIVE','INACTIVE')),
   preferred_channel text not null default 'EMAIL' check (preferred_channel='EMAIL'),
   consent_email boolean not null default false,
@@ -23,7 +23,8 @@ create table public.donors (
   opted_out boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check (consent_email = false or (consent_at is not null and consent_version is not null and email is not null))
+  check (consent_email = false or (consent_at is not null and consent_version is not null and email is not null)),
+  constraint donors_blood_pair_check check ((blood_type is null) = (rh_factor is null))
 );
 create index donors_blood_group_idx on public.donors(blood_type,rh_factor);
 create index donors_contactable_idx on public.donors(status,consent_email,opted_out);

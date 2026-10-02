@@ -10,7 +10,7 @@ export type Go = (tab: TabKey, intent?: string) => void;
 
 export type Donor = {
   id: number; dni: string; first_name: string; last_name: string; gender: 'M' | 'F'; birth_date: string;
-  phone: string; email: string | null; blood_type: string; rh_factor: string; status: string;
+  phone: string; email: string | null; blood_type: string | null; rh_factor: string | null; status: string;
   consent_email: boolean; opted_out: boolean; auth_user_id: string | null;
 };
 

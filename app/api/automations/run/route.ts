@@ -68,7 +68,8 @@ export async function POST(request: Request) {
       .map((donor): Candidate | null => {
         const list = (donationsByDonor.get(donor.id) || []).slice().sort((a, b) => b.donation_date.localeCompare(a.donation_date));
         const last = list[0] || null;
-        const daysSinceLast = last ? (now.getTime() - new Date(`${last.donation_date}T00:00:00`).getTime()) / 86_400_000 : Infinity;
+        if (!last) return null; // sin donaciones previas no hay a qué "volver"; además evitaría el límite de un aviso por donación
+        const daysSinceLast = (now.getTime() - new Date(`${last.donation_date}T00:00:00`).getTime()) / 86_400_000;
         const countThisYear = list.filter((x) => x.donation_date.slice(0, 4) === String(year)).length;
         const eligible = daysSinceLast >= intervalDays && countThisYear < annualLimit(donor.gender);
         return eligible ? { donor, relatedDonationId: last?.id ?? null } : null;
