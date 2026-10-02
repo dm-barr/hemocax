@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "legacy-demo",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3000
+    },
+    {
+      "name": "automations-worker",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["automations/worker.py"],
+      "port": 8787
+    }
+  ]
+}

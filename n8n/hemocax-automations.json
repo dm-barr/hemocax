@@ -1,0 +1,22 @@
+{
+  "name": "HEMOCAX recordatorios y fidelización",
+  "nodes": [
+    {"parameters":{"rule":{"interval":[{"field":"cronExpression","expression":"0 8 * * *"}]}},"id":"schedule-birthdays","name":"Diario 08:00 cumpleaños","type":"n8n-nodes-base.scheduleTrigger","typeVersion":1.2,"position":[220,160]},
+    {"parameters":{"rule":{"interval":[{"field":"cronExpression","expression":"15 8 * * *"}]}},"id":"schedule-returns","name":"Diario 08:15 recurrencia","type":"n8n-nodes-base.scheduleTrigger","typeVersion":1.2,"position":[220,330]},
+    {"parameters":{"rule":{"interval":[{"field":"cronExpression","expression":"30 8 * * *"}]}},"id":"schedule-thanks","name":"Diario 08:30 agradecimiento","type":"n8n-nodes-base.scheduleTrigger","typeVersion":1.2,"position":[220,500]},
+    {"parameters":{"rule":{"interval":[{"field":"cronExpression","expression":"45 8 * * *"}]}},"id":"schedule-frequent","name":"Diario 08:45 reconocimiento","type":"n8n-nodes-base.scheduleTrigger","typeVersion":1.2,"position":[220,670]},
+    {"parameters":{"method":"POST","url":"={{$env.HEMOCAX_API_URL}}/api/automations/run","sendHeaders":true,"headerParameters":{"parameters":[{"name":"x-hemocax-automation-secret","value":"={{$env.N8N_AUTOMATION_SECRET}}"},{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={\"type\":\"BIRTHDAY\"}"},"id":"run-birthdays","name":"Procesar cumpleaños","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[500,160]},
+    {"parameters":{"method":"POST","url":"={{$env.HEMOCAX_API_URL}}/api/automations/run","sendHeaders":true,"headerParameters":{"parameters":[{"name":"x-hemocax-automation-secret","value":"={{$env.N8N_AUTOMATION_SECRET}}"},{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={\"type\":\"RETURN_REMINDER\"}"},"id":"run-returns","name":"Procesar recordatorios de retorno","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[500,330]},
+    {"parameters":{"method":"POST","url":"={{$env.HEMOCAX_API_URL}}/api/automations/run","sendHeaders":true,"headerParameters":{"parameters":[{"name":"x-hemocax-automation-secret","value":"={{$env.N8N_AUTOMATION_SECRET}}"},{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={\"type\":\"DONATION_THANKS\"}"},"id":"run-thanks","name":"Procesar agradecimientos","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[500,500]},
+    {"parameters":{"method":"POST","url":"={{$env.HEMOCAX_API_URL}}/api/automations/run","sendHeaders":true,"headerParameters":{"parameters":[{"name":"x-hemocax-automation-secret","value":"={{$env.N8N_AUTOMATION_SECRET}}"},{"name":"Content-Type","value":"application/json"}]},"sendBody":true,"specifyBody":"json","jsonBody":"={\"type\":\"FREQUENT_DONOR\"}"},"id":"run-frequent","name":"Reconocer límite anual","type":"n8n-nodes-base.httpRequest","typeVersion":4.2,"position":[500,670]}
+  ],
+  "connections": {
+    "Diario 08:00 cumpleaños":{"main":[[{"node":"Procesar cumpleaños","type":"main","index":0}]]},
+    "Diario 08:15 recurrencia":{"main":[[{"node":"Procesar recordatorios de retorno","type":"main","index":0}]]},
+    "Diario 08:30 agradecimiento":{"main":[[{"node":"Procesar agradecimientos","type":"main","index":0}]]},
+    "Diario 08:45 reconocimiento":{"main":[[{"node":"Reconocer límite anual","type":"main","index":0}]]}
+  },
+  "active":false,
+  "settings":{"executionOrder":"v1","timezone":"America/Lima"},
+  "versionId":"hemocax-automations-v1"
+}
