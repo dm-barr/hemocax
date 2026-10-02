@@ -16,6 +16,15 @@ const KINDS: { kind: Kind; title: string; text: string }[] = [
   { kind: 'DONOR', title: 'Donante', text: 'Entra a su portal para ver sus donaciones y resultados.' },
 ];
 
+const EASY_WORDS = ['sol', 'luna', 'rio', 'casa', 'pan', 'agua', 'flor', 'mesa', 'tren', 'lago', 'nube', 'mar', 'pino', 'gato', 'perro', 'arbol', 'cielo', 'tierra', 'fuego', 'viento', 'trigo', 'maiz', 'papa', 'queso', 'leche', 'campo', 'monte', 'piedra', 'lluvia', 'verde', 'azul', 'rojo', 'dulce', 'fuerte', 'grande', 'pronto', 'amigo', 'vida', 'paz', 'luz', 'miel', 'cafe', 'roble', 'rosa', 'nido', 'pluma', 'barro', 'lana', 'aire', 'ola'];
+
+/** Contraseña fácil de leer y dictar por teléfono: tres palabras y dos números (ej. sol-rio-casa47). */
+function generateEasyPassword(): string {
+  const n = crypto.getRandomValues(new Uint32Array(4));
+  const word = (i: number) => EASY_WORDS[n[i] % EASY_WORDS.length];
+  return `${word(0)}-${word(1)}-${word(2)}${10 + (n[3] % 90)}`;
+}
+
 function generatePassword(): string {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
   const bytes = crypto.getRandomValues(new Uint32Array(14));
@@ -105,6 +114,7 @@ function CreateModal({ free, notify, onClose, onCreated }: { free: Donor[]; noti
   const [donorId, setDonorId] = useState('');
   const [canRelease, setCanRelease] = useState(false);
   const [password, setPassword] = useState(generatePassword());
+  const newPassword = (k: Kind) => (k === 'DONOR' ? generateEasyPassword() : generatePassword());
   const [show, setShow] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -135,7 +145,7 @@ function CreateModal({ free, notify, onClose, onCreated }: { free: Donor[]; noti
         <div className="kinds">
           {KINDS.map((k) => (
             <label key={k.kind} className={kind === k.kind ? 'kind active' : 'kind'}>
-              <input type="radio" name="kind" checked={kind === k.kind} onChange={() => setKind(k.kind)} />
+              <input type="radio" name="kind" checked={kind === k.kind} onChange={() => { setKind(k.kind); setPassword(newPassword(k.kind)); }} />
               <b>{k.title}</b>
               <span>{k.text}</span>
             </label>
@@ -164,11 +174,11 @@ function CreateModal({ free, notify, onClose, onCreated }: { free: Donor[]; noti
         )}
 
         <p className="form-section">3. Contraseña inicial</p>
-        <Field label="Contraseña" hint="Ya generamos una segura. Anótala o cópiala: luego ya no se vuelve a mostrar.">
+        <Field label="Contraseña" hint={kind === 'DONOR' ? 'Para donantes usamos una contraseña fácil de leer y de dictar. Anótala o cópiala: luego ya no se vuelve a mostrar. El donante puede cambiarla en su portal.' : 'Ya generamos una segura. Anótala o cópiala: luego ya no se vuelve a mostrar.'}>
           <div className="password-row">
             <input required minLength={12} type={show ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} />
             <button type="button" className="secondary small" onClick={() => setShow((s) => !s)}>{show ? 'Ocultar' : 'Mostrar'}</button>
-            <button type="button" className="secondary small" onClick={() => setPassword(generatePassword())}>Generar otra</button>
+            <button type="button" className="secondary small" onClick={() => setPassword(newPassword(kind))}>Generar otra</button>
           </div>
         </Field>
 

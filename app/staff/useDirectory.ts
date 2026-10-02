@@ -8,7 +8,7 @@ import { Donor, Notify, friendlyError } from './ui';
 
 export type DonationRow = { id: number; donor_id: number; donation_date: string };
 
-const DEFAULT_PARAMS: Params = { limits: { M: 4, F: 3 }, intervals: { M: 90, F: 90 }, recommendations: '' };
+const DEFAULT_PARAMS: Params = { limits: { M: 4, F: 3 }, intervals: { M: 90, F: 90 }, recommendations: '', contactInfo: '' };
 
 /** Carga el padrón de donantes con sus donaciones y calcula quién puede donar hoy. */
 export function useDirectory(notify: Notify) {
