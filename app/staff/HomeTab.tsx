@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getBrowserSupabaseClient } from '@/lib/supabase/client';
 import { Go, PageHeader, Profile, ROLE_LABEL } from './ui';
 
-type Counts = { donors: number; donations: number; pending: number; sent: number; unauthorized: number };
+type Counts = { donors: number; donations: number; pending: number; sent: number; unauthorized: number; overdue: number; unapproved: number };
 
 const ROLE_HELP: Record<string, string> = {
   ADMIN: 'Puedes hacer todo: registrar donantes y donaciones, liberar resultados, enviar correos y crear cuentas de acceso para tu equipo.',
@@ -19,12 +19,15 @@ export default function HomeTab({ profile, go }: { profile: Profile; go: Go }) {
       const supabase = getBrowserSupabaseClient();
       const head = { count: 'exact', head: true } as const;
       const year = new Date().getFullYear();
-      const [donors, donations, pending, sent, unauthorized] = await Promise.all([
+      const cutoff = new Date(Date.now() - 36 * 3_600_000).toISOString();
+      const [donors, donations, pending, sent, unauthorized, overdue, unapproved] = await Promise.all([
         supabase.from('donors').select('id', head),
         supabase.from('donations').select('id', head).gte('donation_date', `${year}-01-01`),
         supabase.from('donation_results').select('id', head).eq('status', 'PENDING'),
         supabase.from('communications').select('id', head).in('status', ['SENT', 'DELIVERED', 'READ']),
         supabase.from('donors').select('id', head).eq('consent_email', false),
+        supabase.from('donation_results').select('id', head).eq('status', 'PENDING').eq('critical', false).lt('created_at', cutoff),
+        supabase.from('message_templates').select('type', head).eq('approved', false),
       ]);
       setCounts({
         donors: donors.count ?? 0,
@@ -32,12 +35,16 @@ export default function HomeTab({ profile, go }: { profile: Profile; go: Go }) {
         pending: pending.count ?? 0,
         sent: sent.count ?? 0,
         unauthorized: unauthorized.count ?? 0,
+        overdue: overdue.count ?? 0,
+        unapproved: unapproved.count ?? 0,
       });
     })();
   }, []);
 
   const firstName = profile.full_name.split(' ')[0];
-  const attention: { text: string; action: string; tab: 'results' | 'donors' }[] = [];
+  const attention: { text: string; action: string; tab: 'results' | 'donors' | 'params' }[] = [];
+  if (counts && counts.overdue > 0) attention.push({ text: `${counts.overdue} resultado(s) llevan más de 36 horas esperando: la meta es liberarlos en 48.`, action: 'Revisar ahora', tab: 'results' });
+  if (counts && counts.unapproved > 0 && profile.role === 'ADMIN') attention.push({ text: `${counts.unapproved} mensaje(s) automático(s) sin aprobar: no se enviarán recordatorios hasta que la Jefatura los apruebe.`, action: 'Aprobar mensajes', tab: 'params' });
   if (counts && counts.pending > 0) attention.push({ text: `${counts.pending} resultado(s) esperan tu revisión.`, action: 'Ver resultados', tab: 'results' });
   if (counts && counts.unauthorized > 0) attention.push({ text: `${counts.unauthorized} donante(s) todavía no autorizan recibir correos.`, action: 'Ver donantes', tab: 'donors' });
 

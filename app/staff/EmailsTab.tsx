@@ -5,7 +5,7 @@ import { getBrowserSupabaseClient } from '@/lib/supabase/client';
 import { callApi } from './api';
 import { Badge, EMAIL_STATUS_LABEL, EMAIL_TYPE_LABEL, Empty, Field, Notify, PageHeader, friendlyError } from './ui';
 
-type Mail = { id: number; type: string; status: string; message: string; created_at: string; error_message: string | null; donors: { first_name: string; last_name: string } | null };
+type Mail = { id: number; type: string; status: string; message: string; created_at: string; error_message: string | null; created_by_name: string | null; donors: { first_name: string; last_name: string } | null };
 type Target = { id: number; first_name: string; last_name: string; dni: string };
 
 const DEFAULT_MESSAGE = 'Hola {{nombre}}, gracias por ser parte de HEMOCAX.';
@@ -21,7 +21,7 @@ export default function EmailsTab({ notify }: { notify: Notify }) {
   const load = useCallback(async () => {
     const supabase = getBrowserSupabaseClient();
     const [m, t] = await Promise.all([
-      supabase.from('communications').select('id,type,status,message,created_at,error_message,donors(first_name,last_name)').order('created_at', { ascending: false }).limit(100),
+      supabase.from('communications').select('id,type,status,message,created_at,error_message,created_by_name,donors(first_name,last_name)').order('created_at', { ascending: false }).limit(100),
       supabase.from('donors').select('id,first_name,last_name,dni').eq('status', 'ACTIVE').eq('consent_email', true).eq('opted_out', false).not('email', 'is', null).order('last_name'),
     ]);
     if (m.error) notify(friendlyError(m.error.message), 'error');
@@ -83,7 +83,7 @@ export default function EmailsTab({ notify }: { notify: Notify }) {
         <div className="card table-card">
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Fecha</th><th>Donante</th><th>Tipo</th><th>Estado</th><th>Mensaje</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Donante</th><th>Tipo</th><th>Canal</th><th>Enviado por</th><th>Estado</th><th>Mensaje</th></tr></thead>
               <tbody>
                 {mails.map((c) => {
                   const status = EMAIL_STATUS_LABEL[c.status] ?? { text: c.status, tone: 'muted' as const };
@@ -92,6 +92,8 @@ export default function EmailsTab({ notify }: { notify: Notify }) {
                       <td>{new Date(c.created_at).toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' })}</td>
                       <td>{c.donors ? `${c.donors.first_name} ${c.donors.last_name}` : '—'}</td>
                       <td>{EMAIL_TYPE_LABEL[c.type] ?? c.type}</td>
+                      <td>Correo</td>
+                      <td>{c.created_by_name ?? <span className="muted">—</span>}</td>
                       <td><Badge tone={status.tone}>{status.text}</Badge>{c.status === 'FAILED' && c.error_message && <><br /><small className="error">{c.error_message}</small></>}</td>
                       <td>{c.message}</td>
                     </tr>

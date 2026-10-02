@@ -1,10 +1,11 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
+import { limaToday } from '@/lib/eligibility';
 
 export type Role = 'ADMIN' | 'STAFF' | 'DONOR';
 export type Profile = { dni: string; full_name: string; role: Role; can_release_results: boolean };
-export type TabKey = 'home' | 'donors' | 'results' | 'campaigns' | 'emails' | 'accounts' | 'audit' | 'account';
+export type TabKey = 'home' | 'donors' | 'results' | 'campaigns' | 'emails' | 'reports' | 'accounts' | 'params' | 'audit' | 'account';
 export type Notify = (message: string, kind?: 'ok' | 'error') => void;
 export type Go = (tab: TabKey, intent?: string) => void;
 
@@ -16,7 +17,7 @@ export type Donor = {
 
 export const fullName = (d: { first_name: string; last_name: string }) => `${d.first_name} ${d.last_name}`;
 export const isAuthorized = (d: Pick<Donor, 'consent_email' | 'opted_out'>) => d.consent_email && !d.opted_out;
-export const todayISO = () => new Date().toISOString().slice(0, 10);
+export const todayISO = limaToday;
 
 type Tone = 'ok' | 'warn' | 'danger' | 'muted' | 'info';
 
@@ -52,10 +53,30 @@ export const EMAIL_TYPE_LABEL: Record<string, string> = {
 
 export const AUDIT_LABEL: Record<string, string> = {
   USER_CREATED: 'Se creó una cuenta de acceso',
-  COMMUNICATION_CREATED: 'Se registró un correo',
+  USER_PASSWORD_RESET: 'Se restableció una contraseña',
+  USER_ACTIVATED: 'Se activó una cuenta',
+  USER_DEACTIVATED: 'Se desactivó una cuenta',
+  USER_PERMISSION_CHANGED: 'Cambió el permiso de liberar resultados',
+  DONOR_CREATED: 'Se registró un donante',
+  DONOR_UPDATED: 'Se editaron datos de un donante',
+  DONOR_DELETED: 'Se eliminó un donante',
+  DONOR_ANONYMIZED: 'Se anonimizaron los datos de un donante',
+  DONATION_CREATED: 'Se registró una donación',
+  DONATION_UPDATED: 'Se editó una donación',
+  DONATION_DELETED: 'Se eliminó una donación',
+  RESULT_RELEASED: 'Se liberó un resultado',
+  RESULT_MARKED_CRITICAL: 'Se marcó un resultado como crítico',
+  RESULT_CRITICAL_CLEARED: 'Se quitó la marca de crítico',
+  CAMPAIGN_CREATED: 'Se creó una campaña',
+  CAMPAIGN_UPDATED: 'Se editó una campaña',
+  CAMPAIGN_DELETED: 'Se eliminó una campaña',
+  COMMUNICATION_CREATED: 'Se envió un correo',
   EMAIL_STATUS_UPDATED: 'Cambió el estado de un correo',
   AUTOMATION_RUN: 'Se ejecutó una automatización',
-  RESULT_RELEASED: 'Se liberó un resultado',
+  CONFIG_CREATED: 'Se creó un parámetro',
+  CONFIG_UPDATED: 'Se cambió un parámetro',
+  TEMPLATE_UPDATED: 'Se editó o aprobó un mensaje automático',
+  CONSENT_TEXT_PUBLISHED: 'Se publicó un nuevo texto de consentimiento',
 };
 
 export function friendlyError(message: string): string {
@@ -118,4 +139,26 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
       </div>
     </div>
   );
+}
+
+export function downloadFile(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** CSV con BOM para que Excel respete las tildes. */
+export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
+  if (!rows.length) return;
+  const cols = Object.keys(rows[0]);
+  const esc = (v: unknown) => {
+    const t = v === null || v === undefined ? '' : String(v);
+    return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const csv = [cols.join(','), ...rows.map((r) => cols.map((c) => esc(r[c])).join(','))].join('\r\n');
+  downloadFile(filename, '﻿' + csv, 'text/csv;charset=utf-8');
 }

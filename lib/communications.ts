@@ -1,11 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { MailResult, sendEmail } from './email';
 
-type Comm = { id: number; email: string; type: string; message: string; result_id: number | null };
+type Comm = { id: number; email: string; type: string; message: string; result_id: number | null; subject?: string };
 
 /** Envía el correo de una comunicación ya registrada y guarda el resultado del envío. Usar con el cliente de servicio. */
 export async function deliverCommunication(service: SupabaseClient, comm: Comm): Promise<MailResult> {
-  const result = await sendEmail({ to: comm.email, type: comm.type, message: comm.message });
+  const result = await sendEmail({ to: comm.email, type: comm.type, message: comm.message, subject: comm.subject });
 
   await service.from('communications').update({
     status: result.status,

@@ -25,7 +25,7 @@ function linkify(escaped: string): string {
   });
 }
 
-export function renderEmail({ type, message, siteUrl }: { type: string; message: string; siteUrl: string }) {
+export function renderEmail({ type, message, siteUrl, subject }: { type: string; message: string; siteUrl: string; subject?: string }) {
   const c = CONFIG[type] ?? CONFIG.MANUAL;
   const paragraphs = message.split(/\n+/).map((p) => p.trim()).filter(Boolean);
 
@@ -69,5 +69,5 @@ export function renderEmail({ type, message, siteUrl }: { type: string; message:
 
   const text = [c.heading, '', ...paragraphs, ...(c.cta ? ['', `${c.cta}: ${siteUrl}`] : []), '', '—', 'Banco de Sangre · HRDC', footerText].join('\n');
 
-  return { subject: c.subject, html, text };
+  return { subject: subject || c.subject, html, text };
 }
