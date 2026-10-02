@@ -34,6 +34,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'No se puede contactar: falta consentimiento vigente de correo o el donante no tiene correo registrado.' }, { status: 403 });
   }
 
+  const { data: me } = await caller.from('profiles').select('full_name').eq('user_id', callerUser.user.id).single();
+
   const { data: row, error: insertError } = await caller
     .from('communications')
     .insert({
@@ -46,6 +48,7 @@ export async function POST(request: Request) {
       message,
       status: 'PENDING',
       created_by: callerUser.user.id,
+      created_by_name: me?.full_name ?? null,
     })
     .select('*')
     .single();

@@ -2,77 +2,91 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { getBrowserSupabaseClient } from '@/lib/supabase/client';
-import { Badge, Donor, Empty, Field, Modal, Notify, PageHeader, fullName, friendlyError, isAuthorized, todayISO } from './ui';
+import { Params, loadParams } from '@/lib/params';
+import { Eligibility, computeEligibility, daysBetween, formatDate } from '@/lib/eligibility';
+import { callApi } from './api';
+import ImportDonors from './ImportDonors';
+import { Badge, Donor, Empty, Field, Modal, Notify, PageHeader, downloadFile, fullName, friendlyError, isAuthorized, todayISO } from './ui';
 
-type DonationRow = { donor_id: number; donation_date: string };
-type Filter = 'all' | 'authorized' | 'unauthorized';
+type DonationRow = { id: number; donor_id: number; donation_date: string };
+type Filter = 'all' | 'apto' | 'authorized' | 'unauthorized';
+type ConsentEvent = { id: number; action: 'GRANTED' | 'REVOKED'; version: string | null; recorded_via: string; created_at: string };
 
-const EMPTY_FORM = { dni: '', first_name: '', last_name: '', gender: 'F', birth_date: '', phone: '', email: '', blood: '', consent: false };
+const EMPTY_FORM = { dni: '', first_name: '', last_name: '', gender: 'F', birth_date: '', phone: '', email: '', blood: '', status: 'ACTIVE', consent: false };
 const BLOOD_GROUPS = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
+const DEFAULT_PARAMS: Params = { limits: { M: 4, F: 3 }, intervals: { M: 90, F: 90 }, recommendations: '' };
 
-export default function DonorsTab({ notify, intent }: { notify: Notify; intent?: string }) {
+export default function DonorsTab({ notify, intent, isAdmin }: { notify: Notify; intent?: string; isAdmin: boolean }) {
   const [donors, setDonors] = useState<Donor[]>([]);
   const [donations, setDonations] = useState<DonationRow[]>([]);
-  const [limits, setLimits] = useState({ M: 4, F: 3 });
+  const [params, setParams] = useState<Params>(DEFAULT_PARAMS);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const [group, setGroup] = useState('');
   const [editing, setEditing] = useState<Donor | 'new' | null>(intent === 'new' ? 'new' : null);
   const [donating, setDonating] = useState<Donor | null>(null);
   const [consenting, setConsenting] = useState<Donor | null>(null);
+  const [dataFor, setDataFor] = useState<Donor | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const load = useCallback(async () => {
     const supabase = getBrowserSupabaseClient();
-    const [d, ds, cfg] = await Promise.all([
+    const [d, ds, p] = await Promise.all([
       supabase.from('donors')
         .select('id,dni,first_name,last_name,gender,birth_date,phone,email,blood_type,rh_factor,status,consent_email,opted_out,auth_user_id')
         .order('last_name'),
-      supabase.from('donations').select('donor_id,donation_date').eq('donation_type', 'WHOLE_BLOOD'),
-      supabase.from('system_config').select('key,value').in('key', ['male_annual_limit', 'female_annual_limit']),
+      supabase.from('donations').select('id,donor_id,donation_date').eq('donation_type', 'WHOLE_BLOOD'),
+      loadParams(supabase),
     ]);
     if (d.error) notify(friendlyError(d.error.message), 'error');
     else setDonors((d.data || []) as Donor[]);
     if (ds.data) setDonations(ds.data as DonationRow[]);
-    if (cfg.data) {
-      const map = Object.fromEntries(cfg.data.map((r) => [r.key, Number(r.value)]));
-      setLimits({ M: map.male_annual_limit || 4, F: map.female_annual_limit || 3 });
-    }
+    setParams(p);
     setLoading(false);
   }, [notify]);
 
   useEffect(() => { load(); }, [load]);
 
-  const year = String(new Date().getFullYear());
-  const perDonor = useMemo(() => {
-    const map = new Map<number, { thisYear: number; last: string }>();
-    for (const x of donations) {
-      const cur = map.get(x.donor_id) ?? { thisYear: 0, last: '' };
-      if (x.donation_date.slice(0, 4) === year) cur.thisYear += 1;
-      if (x.donation_date > cur.last) cur.last = x.donation_date;
-      map.set(x.donor_id, cur);
-    }
+  const eligibility = useMemo(() => {
+    const byDonor = new Map<number, string[]>();
+    for (const x of donations) byDonor.set(x.donor_id, [...(byDonor.get(x.donor_id) || []), x.donation_date]);
+    const map = new Map<number, Eligibility>();
+    for (const d of donors) map.set(d.id, computeEligibility({ gender: d.gender, active: d.status === 'ACTIVE', donationDates: byDonor.get(d.id) || [], params }));
     return map;
-  }, [donations, year]);
+  }, [donors, donations, params]);
 
   const filtered = donors.filter((d) => {
     const text = `${fullName(d)} ${d.dni} ${d.email ?? ''}`.toLowerCase();
     if (!text.includes(query.toLowerCase())) return false;
-    if (filter === 'all') return true;
-    return filter === 'authorized' ? isAuthorized(d) : !isAuthorized(d);
+    if (group && `${d.blood_type ?? ''}${d.rh_factor ?? ''}` !== group) return false;
+    if (filter === 'apto') return eligibility.get(d.id)?.state === 'APTO';
+    if (filter === 'authorized') return isAuthorized(d);
+    if (filter === 'unauthorized') return !isAuthorized(d);
+    return true;
   });
 
   return (
     <>
       <PageHeader
         title="Donantes"
-        help="Aquí están todas las personas registradas como donantes. Desde aquí registras una donación nueva o anotas si el donante autorizó recibir correos."
-        action={<button className="primary" onClick={() => setEditing('new')}>+ Registrar donante</button>}
+        help="Aquí están todas las personas registradas como donantes. Desde aquí registras una donación, anotas si el donante autorizó recibir correos, ves quién está apto para volver a donar y atiendes sus derechos sobre sus datos."
+        action={(
+          <div className="head-actions">
+            <button className="secondary" onClick={() => setImporting(true)}>Importar desde Excel</button>
+            <button className="primary" onClick={() => setEditing('new')}>+ Registrar donante</button>
+          </div>
+        )}
       />
 
       <div className="toolbar">
         <input className="search" placeholder="Buscar por nombre, DNI o correo" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Buscar donante" />
+        <select className="select-inline" value={group} onChange={(e) => setGroup(e.target.value)} aria-label="Filtrar por grupo sanguíneo">
+          <option value="">Todos los grupos</option>
+          {BLOOD_GROUPS.map((g) => <option key={g}>{g}</option>)}
+        </select>
         <div className="chips" role="group" aria-label="Filtrar">
-          {([['all', 'Todos'], ['authorized', 'Con correo autorizado'], ['unauthorized', 'Sin autorizar']] as [Filter, string][]).map(([key, label]) => (
+          {([['all', 'Todos'], ['apto', 'Aptos hoy'], ['authorized', 'Con correo autorizado'], ['unauthorized', 'Sin autorizar']] as [Filter, string][]).map(([key, label]) => (
             <button key={key} className={filter === key ? 'chip active' : 'chip'} onClick={() => setFilter(key)}>{label}</button>
           ))}
         </div>
@@ -82,7 +96,7 @@ export default function DonorsTab({ notify, intent }: { notify: Notify; intent?:
         <div className="card">
           <Empty
             title={donors.length === 0 ? 'Todavía no hay donantes registrados' : 'No encontramos donantes con ese filtro'}
-            hint={donors.length === 0 ? 'Empieza registrando al primero: solo necesitas su DNI, nombre, fecha de nacimiento y tipo de sangre.' : 'Prueba con otro nombre o cambia el filtro.'}
+            hint={donors.length === 0 ? 'Registra al primero, o importa el padrón que ya tienen desde un archivo de Excel.' : 'Prueba con otro nombre o cambia el filtro.'}
             action={donors.length === 0 ? <button className="primary" onClick={() => setEditing('new')}>Registrar el primer donante</button> : undefined}
           />
         </div>
@@ -90,11 +104,10 @@ export default function DonorsTab({ notify, intent }: { notify: Notify; intent?:
         <div className="card table-card">
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Donante</th><th>Sangre</th><th>Contacto</th><th>Correos</th><th>Donaciones</th><th>Acciones</th></tr></thead>
+              <thead><tr><th>Donante</th><th>Sangre</th><th>Contacto</th><th>Correos</th><th>¿Puede donar?</th><th>Acciones</th></tr></thead>
               <tbody>
                 {filtered.map((d) => {
-                  const info = perDonor.get(d.id);
-                  const limit = limits[d.gender];
+                  const e = eligibility.get(d.id)!;
                   return (
                     <tr key={d.id}>
                       <td><b>{fullName(d)}</b><br /><small>DNI {d.dni}{d.auth_user_id ? ' · tiene cuenta' : ''}</small></td>
@@ -102,13 +115,17 @@ export default function DonorsTab({ notify, intent }: { notify: Notify; intent?:
                       <td>{d.email || <span className="muted">Sin correo</span>}<br /><small>{d.phone}</small></td>
                       <td>{d.opted_out ? <Badge tone="warn">No quiere correos</Badge> : d.consent_email ? <Badge tone="ok">Autorizado</Badge> : <Badge>Sin autorizar</Badge>}</td>
                       <td>
-                        {info?.thisYear ?? 0} de {limit} este año<br />
-                        <small>Última: {info?.last ? new Date(`${info.last}T00:00:00`).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }) : 'ninguna'}</small>
+                        {e.state === 'APTO' && <Badge tone="ok">Apto</Badge>}
+                        {e.state === 'ESPERA' && <Badge tone="warn">Desde {formatDate(e.eligibleFrom!)}</Badge>}
+                        {e.state === 'MAXIMO' && <Badge tone="warn">Máximo anual</Badge>}
+                        {e.state === 'INACTIVO' && <Badge>Inactivo</Badge>}
+                        <br /><small>{e.thisYear} de {e.limit} este año · última: {e.lastDate ? formatDate(e.lastDate) : 'ninguna'}</small>
                       </td>
                       <td className="actions">
                         <button className="primary small" onClick={() => setDonating(d)}>Registrar donación</button>
                         <button className="secondary small" onClick={() => setConsenting(d)}>Correos</button>
                         <button className="secondary small" onClick={() => setEditing(d)}>Editar</button>
+                        <button className="secondary small" onClick={() => setDataFor(d)}>Datos</button>
                       </td>
                     </tr>
                   );
@@ -120,8 +137,10 @@ export default function DonorsTab({ notify, intent }: { notify: Notify; intent?:
       )}
 
       {editing && <DonorForm donor={editing === 'new' ? null : editing} notify={notify} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
-      {donating && <DonationModal donor={donating} donations={donations} limit={limits[donating.gender]} notify={notify} onClose={() => setDonating(null)} onSaved={() => { setDonating(null); load(); }} />}
+      {donating && <DonationModal donor={donating} donations={donations} params={params} notify={notify} onClose={() => setDonating(null)} onSaved={() => { setDonating(null); load(); }} />}
       {consenting && <ConsentModal donor={consenting} notify={notify} onClose={() => setConsenting(null)} onSaved={() => { setConsenting(null); load(); }} />}
+      {dataFor && <DataModal donor={dataFor} isAdmin={isAdmin} notify={notify} onClose={() => setDataFor(null)} onChanged={() => { setDataFor(null); load(); }} />}
+      {importing && <ImportDonors notify={notify} onClose={() => setImporting(false)} onDone={() => { setImporting(false); load(); }} />}
     </>
   );
 }
@@ -129,7 +148,7 @@ export default function DonorsTab({ notify, intent }: { notify: Notify; intent?:
 function DonorForm({ donor, notify, onClose, onSaved }: { donor: Donor | null; notify: Notify; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState(donor ? {
     dni: donor.dni, first_name: donor.first_name, last_name: donor.last_name, gender: donor.gender as string, birth_date: donor.birth_date,
-    phone: donor.phone, email: donor.email ?? '', blood: donor.blood_type ? `${donor.blood_type}${donor.rh_factor}` : '', consent: false,
+    phone: donor.phone, email: donor.email ?? '', blood: donor.blood_type ? `${donor.blood_type}${donor.rh_factor}` : '', status: donor.status, consent: false,
   } : EMPTY_FORM);
   const [busy, setBusy] = useState(false);
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
@@ -145,10 +164,10 @@ function DonorForm({ donor, notify, onClose, onSaved }: { donor: Donor | null; n
       blood_type: form.blood ? form.blood.slice(0, -1) : null, rh_factor: form.blood ? form.blood.slice(-1) : null,
     };
     const { error } = donor
-      ? await supabase.from('donors').update({ ...data, ...(data.email ? {} : { consent_email: false }) }).eq('id', donor.id)
+      ? await supabase.from('donors').update({ ...data, status: form.status, ...(data.email ? {} : { consent_email: false }) }).eq('id', donor.id)
       : await supabase.from('donors').insert({
           ...data, dni: form.dni,
-          ...(form.consent && data.email ? { consent_email: true, consent_at: new Date().toISOString(), consent_version: 'piloto-v1-personal', opted_out: false } : {}),
+          ...(form.consent && data.email ? { consent_email: true, consent_at: new Date().toISOString(), consent_version: 'piloto-v1', opted_out: false } : {}),
         });
     setBusy(false);
     if (error) { notify(friendlyError(error.message), 'error'); return; }
@@ -186,6 +205,12 @@ function DonorForm({ donor, notify, onClose, onSaved }: { donor: Donor | null; n
           </select>
         </Field>
 
+        {donor && (
+          <Field label="Estado" hint="Un donante inactivo no recibe correos ni aparece como apto.">
+            <select value={form.status} onChange={(e) => set({ status: e.target.value })}><option value="ACTIVE">Activo</option><option value="INACTIVE">Inactivo</option></select>
+          </Field>
+        )}
+
         {!donor && (
           <label className="check">
             <input type="checkbox" checked={form.consent} disabled={!form.email.trim()} onChange={(e) => set({ consent: e.target.checked })} />
@@ -202,12 +227,20 @@ function DonorForm({ donor, notify, onClose, onSaved }: { donor: Donor | null; n
   );
 }
 
-function DonationModal({ donor, donations, limit, notify, onClose, onSaved }: { donor: Donor; donations: DonationRow[]; limit: number; notify: Notify; onClose: () => void; onSaved: () => void }) {
+function DonationModal({ donor, donations, params, notify, onClose, onSaved }: { donor: Donor; donations: DonationRow[]; params: Params; notify: Notify; onClose: () => void; onSaved: () => void }) {
   const [date, setDate] = useState(todayISO());
   const [notes, setNotes] = useState('');
+  const [override, setOverride] = useState(false);
   const [busy, setBusy] = useState(false);
-  const countInYear = donations.filter((x) => x.donor_id === donor.id && x.donation_date.slice(0, 4) === date.slice(0, 4)).length;
+
+  const mine = donations.filter((x) => x.donor_id === donor.id);
+  const limit = params.limits[donor.gender];
+  const interval = params.intervals[donor.gender];
+  const countInYear = mine.filter((x) => x.donation_date.slice(0, 4) === date.slice(0, 4)).length;
   const reached = countInYear >= limit;
+  const previous = mine.filter((x) => x.donation_date <= date).reduce<string | null>((max, x) => (!max || x.donation_date > max ? x.donation_date : max), null);
+  const elapsed = previous ? daysBetween(previous, date) : null;
+  const tooSoon = elapsed !== null && elapsed < interval;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -215,7 +248,9 @@ function DonationModal({ donor, donations, limit, notify, onClose, onSaved }: { 
     const supabase = getBrowserSupabaseClient();
     const { data: auth } = await supabase.auth.getUser();
     const { error } = await supabase.from('donations').insert({
-      donor_id: donor.id, donation_date: date, donation_type: 'WHOLE_BLOOD', notes: notes.trim() || null, created_by: auth.user?.id ?? null,
+      donor_id: donor.id, donation_date: date, donation_type: 'WHOLE_BLOOD',
+      notes: [tooSoon ? 'Registrada antes del intervalo, autorizada por el médico.' : '', notes.trim()].filter(Boolean).join(' ') || null,
+      created_by: auth.user?.id ?? null,
     });
     setBusy(false);
     if (error) { notify(friendlyError(error.message), 'error'); return; }
@@ -227,16 +262,25 @@ function DonationModal({ donor, donations, limit, notify, onClose, onSaved }: { 
     <Modal title="Registrar donación" onClose={onClose}>
       <form onSubmit={submit}>
         <p className="modal-lead">Donante: <b>{fullName(donor)}</b>{donor.blood_type ? ` · ${donor.blood_type}${donor.rh_factor}` : ''}</p>
-        <Field label="Fecha de la donación"><input required type="date" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+        <Field label="Fecha de la donación"><input required type="date" max={todayISO()} value={date} onChange={(e) => { setDate(e.target.value); setOverride(false); }} /></Field>
         <Field label="Notas (opcional)"><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <p className={reached ? 'notice-box warn' : 'notice-box'}>
           {reached
             ? `Este donante ya llegó al máximo de ${limit} donaciones en ${date.slice(0, 4)}. No se puede registrar otra en ese año.`
             : `En ${date.slice(0, 4)} lleva ${countInYear} de ${limit} donaciones permitidas.`}
         </p>
+        {tooSoon && !reached && (
+          <>
+            <p className="notice-box warn">Solo han pasado {elapsed} días desde su donación anterior; el intervalo establecido es de {interval} días.</p>
+            <label className="check">
+              <input type="checkbox" checked={override} onChange={(e) => setOverride(e.target.checked)} />
+              <span>Registrar de todos modos: lo autorizó el médico responsable</span>
+            </label>
+          </>
+        )}
         <div className="modal-actions">
           <button type="button" className="secondary" onClick={onClose}>Cancelar</button>
-          <button className="primary" disabled={busy || reached}>{busy ? 'Guardando…' : 'Registrar donación'}</button>
+          <button className="primary" disabled={busy || reached || (tooSoon && !override)}>{busy ? 'Guardando…' : 'Registrar donación'}</button>
         </div>
       </form>
     </Modal>
@@ -248,6 +292,20 @@ function ConsentModal({ donor, notify, onClose, onSaved }: { donor: Donor; notif
   const [email, setEmail] = useState(donor.email ?? '');
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [text, setText] = useState<{ version: string; body: string } | null>(null);
+  const [events, setEvents] = useState<ConsentEvent[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const supabase = getBrowserSupabaseClient();
+      const [v, ev] = await Promise.all([
+        supabase.from('consent_versions').select('version,body').eq('active', true).maybeSingle(),
+        supabase.from('consent_events').select('id,action,version,recorded_via,created_at').eq('donor_id', donor.id).order('created_at', { ascending: false }).limit(8),
+      ]);
+      if (v.data) setText(v.data);
+      setEvents((ev.data || []) as ConsentEvent[]);
+    })();
+  }, [donor.id]);
 
   async function save(patch: object, okMessage: string) {
     setBusy(true);
@@ -258,6 +316,20 @@ function ConsentModal({ donor, notify, onClose, onSaved }: { donor: Donor; notif
     onSaved();
   }
 
+  const history = events.length > 0 && (
+    <>
+      <p className="form-section">Historial de consentimiento</p>
+      <ul className="history">
+        {events.map((e) => (
+          <li key={e.id}>
+            <b>{e.action === 'GRANTED' ? 'Autorizó' : 'Revocó'}</b> · {new Date(e.created_at).toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' })}
+            {' '}· {e.recorded_via === 'DONOR' ? 'desde su portal' : e.recorded_via === 'STAFF' ? 'registrado por el personal' : 'sistema'}{e.version ? ` · texto ${e.version}` : ''}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+
   return (
     <Modal title="Correos del donante" onClose={onClose}>
       <p className="modal-lead"><b>{fullName(donor)}</b> · {donor.email || 'sin correo registrado'}</p>
@@ -265,6 +337,7 @@ function ConsentModal({ donor, notify, onClose, onSaved }: { donor: Donor; notif
         <>
           <p className="notice-box ok">Este donante autorizó recibir correos del Banco de Sangre (recordatorios, avisos de resultados y campañas).</p>
           <p className="muted">Si pidió dejar de recibirlos, quita la autorización. Podrás volver a activarla si cambia de opinión.</p>
+          {history}
           <div className="modal-actions">
             <button className="secondary" onClick={onClose}>Cerrar</button>
             <button className="danger" disabled={busy} onClick={() => save({ consent_email: false, opted_out: true }, 'Listo: ya no recibirá correos.')}>Quitar autorización</button>
@@ -272,27 +345,90 @@ function ConsentModal({ donor, notify, onClose, onSaved }: { donor: Donor; notif
         </>
       ) : (
         <>
-          <p className="muted">El Banco de Sangre solo puede escribirle si el donante lo aceptó. Marca la casilla únicamente si te lo confirmó él mismo.</p>
+          <p className="muted">El Banco de Sangre solo puede escribirle si el donante lo aceptó. Léele este texto y marca la casilla únicamente si lo aceptó.</p>
+          {text && <div className="consent-text"><small>Texto {text.version}</small><p>{text.body}</p></div>}
           {!donor.email && (
             <Field label="Correo del donante" hint="Hace falta un correo para poder escribirle."><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
           )}
           <label className="check">
             <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
-            <span>Confirmo que el donante aceptó recibir correos del Banco de Sangre</span>
+            <span>Confirmo que el donante conoce este texto y aceptó recibir correos del Banco de Sangre</span>
           </label>
+          {history}
           <div className="modal-actions">
             <button className="secondary" onClick={onClose}>Cancelar</button>
             <button
               className="primary"
-              disabled={busy || !confirmed || !(donor.email || email.trim())}
+              disabled={busy || !confirmed || !text || !(donor.email || email.trim())}
               onClick={() => save(
-                { consent_email: true, consent_at: new Date().toISOString(), consent_version: 'piloto-v1-personal', opted_out: false, ...(donor.email ? {} : { email: email.trim() }) },
+                { consent_email: true, consent_at: new Date().toISOString(), consent_version: text?.version, opted_out: false, ...(donor.email ? {} : { email: email.trim() }) },
                 'Listo: el donante ya puede recibir correos.',
               )}
             >Autorizar correos</button>
           </div>
         </>
       )}
+    </Modal>
+  );
+}
+
+function DataModal({ donor, isAdmin, notify, onClose, onChanged }: { donor: Donor; isAdmin: boolean; notify: Notify; onClose: () => void; onChanged: () => void }) {
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function exportData() {
+    setBusy(true);
+    const supabase = getBrowserSupabaseClient();
+    const [don, comm, ev] = await Promise.all([
+      supabase.from('donations').select('*').eq('donor_id', donor.id),
+      supabase.from('communications').select('type,channel,status,message,created_at').eq('donor_id', donor.id),
+      supabase.from('consent_events').select('action,version,recorded_via,created_at').eq('donor_id', donor.id),
+    ]);
+    const ids = (don.data || []).map((x) => x.id);
+    const res = ids.length ? await supabase.from('donation_results').select('status,critical,available_at,created_at').in('donation_id', ids) : { data: [] };
+    const { auth_user_id: _omit, ...personal } = donor;
+    void _omit;
+    downloadFile(`datos-donante-${donor.dni}.json`, JSON.stringify({ donante: personal, donaciones: don.data, resultados: res.data, correos: comm.data, consentimiento: ev.data }, null, 2), 'application/json');
+    setBusy(false);
+  }
+
+  async function deactivate() {
+    setBusy(true);
+    const { error } = await getBrowserSupabaseClient().from('donors').update({ status: 'INACTIVE', opted_out: true, consent_email: false }).eq('id', donor.id);
+    setBusy(false);
+    if (error) { notify(friendlyError(error.message), 'error'); return; }
+    notify('El donante quedó inactivo y ya no recibirá mensajes.');
+    onChanged();
+  }
+
+  async function anonymize() {
+    setBusy(true);
+    try {
+      await callApi('/api/admin/donors/anonymize', { donor_id: donor.id });
+      notify('Datos personales eliminados. Se conservan las donaciones sin identificar a la persona.');
+      onChanged();
+    } catch (e) {
+      notify(friendlyError(e instanceof Error ? e.message : 'No se pudo eliminar.'), 'error');
+    }
+    setBusy(false);
+  }
+
+  return (
+    <Modal title="Datos del donante" onClose={onClose}>
+      <p className="modal-lead"><b>{fullName(donor)}</b> · DNI {donor.dni}</p>
+      <div className="data-actions">
+        <div><b>Descargar sus datos</b><p className="muted">Un archivo con todo lo que el sistema guarda de esta persona (derecho de acceso).</p><button className="secondary small" disabled={busy} onClick={exportData}>Descargar archivo</button></div>
+        <div><b>Dar de baja</b><p className="muted">Pasa a inactivo y deja de recibir mensajes. Se conserva su historial.</p><button className="secondary small" disabled={busy || donor.status === 'INACTIVE'} onClick={deactivate}>{donor.status === 'INACTIVE' ? 'Ya está inactivo' : 'Dar de baja'}</button></div>
+        {isAdmin && (
+          <div>
+            <b>Eliminar sus datos personales</b>
+            <p className="muted">Borra su nombre, DNI, contacto y cuenta. Las donaciones quedan sin identificar. No se puede deshacer. Escribe su DNI para confirmar.</p>
+            <input className="confirm-input" value={typed} onChange={(e) => setTyped(e.target.value.replace(/\D/g, ''))} placeholder={donor.dni} maxLength={8} aria-label="Escribe el DNI para confirmar" />
+            <button className="danger small" disabled={busy || typed !== donor.dni} onClick={anonymize}>Eliminar datos personales</button>
+          </div>
+        )}
+      </div>
+      <div className="modal-actions"><button className="secondary" onClick={onClose}>Cerrar</button></div>
     </Modal>
   );
 }

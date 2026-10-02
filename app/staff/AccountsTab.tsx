@@ -6,7 +6,7 @@ import { callApi } from './api';
 import { Badge, Donor, Empty, Field, Modal, Notify, PageHeader, ROLE_LABEL, Role, fullName, friendlyError } from './ui';
 
 type Account = { user_id: string; dni: string; full_name: string; role: Role; can_release_results: boolean; active: boolean };
-type Created = { dni: string; password: string; name: string };
+type Created = { dni: string; password: string; name: string; reset?: boolean };
 
 const KINDS: { role: Role; title: string; text: string }[] = [
   { role: 'STAFF', title: 'Personal del Banco de Sangre', text: 'Registra donantes y donaciones, revisa resultados y envía correos.' },
@@ -26,6 +26,7 @@ export default function AccountsTab({ notify, intent }: { notify: Notify; intent
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(intent === 'new');
   const [created, setCreated] = useState<Created | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const supabase = getBrowserSupabaseClient();
@@ -41,6 +42,19 @@ export default function AccountsTab({ notify, intent }: { notify: Notify; intent
 
   useEffect(() => { load(); }, [load]);
 
+  async function manage(a: Account, action: string, extra: object = {}) {
+    setBusyId(a.user_id);
+    try {
+      const res = await callApi('/api/admin/users/manage', { user_id: a.user_id, action, ...extra });
+      if (action === 'reset_password') setCreated({ dni: a.dni, password: res.password, name: a.full_name, reset: true });
+      else notify('Cambio guardado.');
+      load();
+    } catch (e) {
+      notify(friendlyError(e instanceof Error ? e.message : 'No se pudo completar la acción.'), 'error');
+    }
+    setBusyId(null);
+  }
+
   return (
     <>
       <PageHeader
@@ -54,7 +68,7 @@ export default function AccountsTab({ notify, intent }: { notify: Notify; intent
         <div className="card table-card">
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Nombre</th><th>DNI</th><th>Tipo de cuenta</th><th>Puede liberar resultados</th><th>Estado</th></tr></thead>
+              <thead><tr><th>Nombre</th><th>DNI</th><th>Tipo de cuenta</th><th>Puede liberar resultados</th><th>Estado</th><th>Acciones</th></tr></thead>
               <tbody>
                 {accounts.map((a) => (
                   <tr key={a.user_id}>
@@ -63,6 +77,11 @@ export default function AccountsTab({ notify, intent }: { notify: Notify; intent
                     <td>{ROLE_LABEL[a.role]}</td>
                     <td>{a.role === 'DONOR' ? <span className="muted">—</span> : a.can_release_results ? <Badge tone="ok">Sí</Badge> : <Badge>No</Badge>}</td>
                     <td>{a.active ? <Badge tone="ok">Activa</Badge> : <Badge tone="warn">Inactiva</Badge>}</td>
+                    <td className="actions">
+                      <button className="secondary small" disabled={busyId === a.user_id} onClick={() => manage(a, 'reset_password')}>Nueva contraseña</button>
+                      {a.role !== 'DONOR' && <button className="secondary small" disabled={busyId === a.user_id} onClick={() => manage(a, 'set_release', { value: !a.can_release_results })}>{a.can_release_results ? 'Quitar permiso de liberar' : 'Dar permiso de liberar'}</button>}
+                      <button className={a.active ? 'danger small' : 'secondary small'} disabled={busyId === a.user_id} onClick={() => manage(a, 'set_active', { active: !a.active })}>{a.active ? 'Desactivar' : 'Activar'}</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -164,8 +183,8 @@ function CreatedModal({ created, onClose }: { created: Created; onClose: () => v
   const text = `Portal HEMOCAX: ${window.location.origin}\nDNI: ${created.dni}\nContraseña temporal: ${created.password}`;
 
   return (
-    <Modal title="Cuenta creada" onClose={onClose}>
-      <p className="notice-box ok">La cuenta de <b>{created.name}</b> ya está lista. Entrégale estos datos; esta es la única vez que se muestra la contraseña.</p>
+    <Modal title={created.reset ? 'Contraseña nueva' : 'Cuenta creada'} onClose={onClose}>
+      <p className="notice-box ok">{created.reset ? <>Se cambió la contraseña de <b>{created.name}</b>. La anterior ya no sirve.</> : <>La cuenta de <b>{created.name}</b> ya está lista.</>} Entrégale estos datos; esta es la única vez que se muestra la contraseña.</p>
       <pre className="credentials">{text}</pre>
       <p className="muted">Pídele que entre y cambie su contraseña en <b>Mi cuenta</b>.</p>
       <div className="modal-actions">

@@ -1,19 +1,17 @@
 import { NextResponse } from 'next/server';
 import { deliverCommunication } from '@/lib/communications';
 import { isSimulated } from '@/lib/email';
+import { computeEligibility, daysBetween, limaToday } from '@/lib/eligibility';
+import { loadParams } from '@/lib/params';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+
+export const maxDuration = 60;
 
 type Donor = { id: number; first_name: string; email: string; gender: 'M' | 'F'; birth_date: string };
 type Donation = { id: number; donor_id: number; donation_date: string };
+type Candidate = { donor: Donor; relatedDonationId: number | null };
 
-const MESSAGES: Record<string, (firstName: string) => string> = {
-  BIRTHDAY: (n) => `Feliz cumpleaños, ${n}. Desde HEMOCAX y el Banco de Sangre te deseamos un excelente día. Gracias por formar parte de nuestra comunidad de donantes.`,
-  RETURN_REMINDER: (n) => `Hola ${n}. Según el intervalo registrado desde tu última donación, puedes volver a considerar participar como donante. La evaluación final corresponde al personal de salud.`,
-  FREQUENT_DONOR: (n) => `Hola ${n}. Gracias por tu compromiso y tus donaciones de este año. Tu solidaridad es muy valiosa para la comunidad.`,
-  DONATION_THANKS: (n) => `Hola ${n}. Gracias por tu donación voluntaria. Cuídate y sigue las recomendaciones que te brindó el personal de salud.`,
-};
-
-export const maxDuration = 60;
+const TYPES = ['BIRTHDAY', 'RETURN_REMINDER', 'FREQUENT_DONOR', 'DONATION_THANKS'];
 
 export async function POST(request: Request) {
   const secret = process.env.AUTOMATION_RUN_SECRET;
@@ -23,19 +21,18 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const type = String(body?.type || '');
-  if (!['BIRTHDAY', 'RETURN_REMINDER', 'FREQUENT_DONOR', 'DONATION_THANKS'].includes(type)) {
-    return NextResponse.json({ error: 'Tipo de automatización no válido.' }, { status: 400 });
-  }
+  if (!TYPES.includes(type)) return NextResponse.json({ error: 'Tipo de automatización no válido.' }, { status: 400 });
 
   const service = createServiceRoleClient();
-  const now = new Date();
-  const year = now.getFullYear();
-  const todayMonthDay = now.toISOString().slice(5, 10);
 
-  const { data: config } = await service.from('system_config').select('key,value').in('key', ['donation_interval_days', 'male_annual_limit', 'female_annual_limit']);
-  const configMap = Object.fromEntries((config || []).map((row) => [row.key, Number(row.value)]));
-  const intervalDays = configMap.donation_interval_days ?? 90;
-  const annualLimit = (gender: 'M' | 'F') => (gender === 'M' ? configMap.male_annual_limit ?? 4 : configMap.female_annual_limit ?? 3);
+  // Solo salen mensajes automáticos con texto aprobado por la Jefatura.
+  const { data: template } = await service.from('message_templates').select('subject,body,approved').eq('type', type).single();
+  if (!template || !template.approved) {
+    return NextResponse.json({ type, eligible: 0, skipped: 'La plantilla de este mensaje no está aprobada.' });
+  }
+
+  const today = limaToday();
+  const params = await loadParams(service);
 
   const { data: donorsData } = await service
     .from('donors')
@@ -51,40 +48,34 @@ export async function POST(request: Request) {
     ? await service.from('donations').select('id,donor_id,donation_date').eq('donation_type', 'WHOLE_BLOOD').in('donor_id', donorIds)
     : { data: [] as Donation[] };
   const donations = (donationsData || []) as Donation[];
-  const donationsByDonor = new Map<number, Donation[]>();
-  for (const d of donations) {
-    const list = donationsByDonor.get(d.donor_id) || [];
-    list.push(d);
-    donationsByDonor.set(d.donor_id, list);
-  }
+  const byDonor = new Map<number, Donation[]>();
+  for (const d of donations) byDonor.set(d.donor_id, [...(byDonor.get(d.donor_id) || []), d]);
 
-  type Candidate = { donor: Donor; relatedDonationId: number | null };
+  const eligibility = (donor: Donor) => {
+    const list = byDonor.get(donor.id) || [];
+    return {
+      list,
+      result: computeEligibility({ gender: donor.gender, active: true, donationDates: list.map((x) => x.donation_date), params, today }),
+    };
+  };
+
   let candidates: Candidate[] = [];
-
   if (type === 'BIRTHDAY') {
-    candidates = donors.filter((d) => d.birth_date.slice(5) === todayMonthDay).map((donor) => ({ donor, relatedDonationId: null }));
+    candidates = donors.filter((d) => d.birth_date.slice(5) === today.slice(5)).map((donor) => ({ donor, relatedDonationId: null }));
   } else if (type === 'RETURN_REMINDER') {
-    candidates = donors
-      .map((donor): Candidate | null => {
-        const list = (donationsByDonor.get(donor.id) || []).slice().sort((a, b) => b.donation_date.localeCompare(a.donation_date));
-        const last = list[0] || null;
-        if (!last) return null; // sin donaciones previas no hay a qué "volver"; además evitaría el límite de un aviso por donación
-        const daysSinceLast = (now.getTime() - new Date(`${last.donation_date}T00:00:00`).getTime()) / 86_400_000;
-        const countThisYear = list.filter((x) => x.donation_date.slice(0, 4) === String(year)).length;
-        const eligible = daysSinceLast >= intervalDays && countThisYear < annualLimit(donor.gender);
-        return eligible ? { donor, relatedDonationId: last?.id ?? null } : null;
-      })
-      .filter((x): x is Candidate => x !== null);
+    for (const donor of donors) {
+      const { list, result } = eligibility(donor);
+      if (!list.length || result.state !== 'APTO') continue; // sin donaciones previas no hay a qué "volver"
+      const last = list.reduce((a, b) => (b.donation_date > a.donation_date ? b : a));
+      candidates.push({ donor, relatedDonationId: last.id });
+    }
   } else if (type === 'FREQUENT_DONOR') {
-    candidates = donors
-      .filter((donor) => (donationsByDonor.get(donor.id) || []).filter((x) => x.donation_date.slice(0, 4) === String(year)).length >= annualLimit(donor.gender))
-      .map((donor) => ({ donor, relatedDonationId: null }));
+    candidates = donors.filter((d) => eligibility(d).result.state === 'MAXIMO').map((donor) => ({ donor, relatedDonationId: null }));
   } else if (type === 'DONATION_THANKS') {
     for (const donation of donations) {
-      const ageDays = (now.getTime() - new Date(`${donation.donation_date}T00:00:00`).getTime()) / 86_400_000;
-      if (ageDays < 0 || ageDays > 7) continue;
+      const age = daysBetween(donation.donation_date, today);
       const donor = donors.find((d) => d.id === donation.donor_id);
-      if (donor) candidates.push({ donor, relatedDonationId: donation.id });
+      if (donor && age >= 0 && age <= 7) candidates.push({ donor, relatedDonationId: donation.id });
     }
   }
 
@@ -95,7 +86,7 @@ export async function POST(request: Request) {
 
   const created: unknown[] = [];
   for (const { donor, relatedDonationId } of candidates) {
-    const message = MESSAGES[type](donor.first_name);
+    const message = template.body.replaceAll('{{nombre}}', donor.first_name);
     const { data: row, error: insertError } = await service
       .from('communications')
       .insert({
@@ -106,11 +97,12 @@ export async function POST(request: Request) {
         email: donor.email,
         message,
         status: 'PENDING',
+        created_by_name: 'Sistema (automático)',
       })
       .select('*')
       .single();
     if (insertError || !row) continue; // 23505: ya se envió este tipo para este donante/periodo
-    const result = await deliverCommunication(service, row);
+    const result = await deliverCommunication(service, { ...row, subject: template.subject });
     created.push({ ...row, status: result.status });
   }
 

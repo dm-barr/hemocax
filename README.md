@@ -30,6 +30,24 @@ Las exportaciones previas de n8n se conservan como referencia histórica en `n8n
 
 El personal con perfil STAFF o ADMIN accede, con el mismo inicio por DNI, a un panel con pestañas: donantes (alta y búsqueda), donaciones (registro, el límite anual se aplica por un trigger en la base de datos), resultados (liberar resultados no críticos), campañas y comunicaciones (envío manual/masivo por correo), y para ADMIN además bitácora de auditoría y cuentas. Casi todo el panel llama directamente a Supabase desde el navegador y se apoya en las mismas políticas de RLS del esquema (`is_staff()`, `current_role()`); solo el aprovisionamiento de cuentas nuevas (`/api/admin/users`) y el puente con el worker de Python (`/api/communications/send`, `/api/communications/webhook`, `/api/automations/run`) corren en el servidor con la clave de servicio, porque son operaciones que la Auth API o el worker necesitan fuera de una sesión de usuario. Cualquier cuenta autenticada puede cambiar su propia contraseña desde "Mi cuenta".
 
+## Funciones del piloto (respecto al documento del proyecto)
+
+Migración adicional: `supabase/migrations/20261002000200_pilot_features.sql` (aplicar después de la inicial).
+
+- **Resultados críticos:** el personal puede marcarlos; nunca se muestran al donante ni se avisan por correo. Quitar la marca requiere permiso de liberar resultados.
+- **Consentimiento informado versionado:** el texto se edita en *Parámetros* (cada cambio crea una versión) y se muestra al donante antes de aceptar. Cada alta o baja queda en un historial (`consent_events`) con quién la registró.
+- **Bitácora automática:** altas, ediciones y bajas de donantes, donaciones, campañas y parámetros se registran por triggers (solo los nombres de los campos cambiados, no sus valores). Los envíos muestran responsable y canal.
+- **Derechos del donante (Ley 29733):** descargar sus datos, darlo de baja y, para administradores, anonimizar (borra datos personales y cuenta; conserva donaciones sin identificar).
+- **Padrón:** importación desde Excel/CSV (plantilla incluida en la ventana de importación). El grupo sanguíneo es opcional.
+- **Aptitud:** intervalo por sexo y máximo anual (editables en *Parámetros*); la lista muestra «apto desde», y registrar una donación antes del intervalo exige confirmar la autorización del médico.
+- **Convocatoria dirigida:** campañas por grupo sanguíneo con filtro de aptitud, conteo por grupo y vista previa de destinatarios.
+- **Mensajes automáticos con aprobación:** los cuatro textos se editan en *Parámetros* y solo se envían una vez aprobados; editarlos quita la aprobación.
+- **Portal del donante:** próxima fecha de donación, recomendaciones junto al resultado, campañas e información educativa activas y descarga de sus datos.
+- **Reportes:** indicadores de la sección 10 del documento (donantes recurrentes, tiempo de entrega de resultados frente a 48 h, donantes O negativo con consentimiento, mensajes), reserva por grupo y exportación CSV.
+- **Cuentas:** restablecer contraseña, activar/desactivar y permiso de liberar resultados.
+
+No implementado: envío por SMS o WhatsApp (el canal actual es solo correo), programación de campañas a una fecha futura, ni los entregables institucionales (manuales, capacitación, acuerdos de confidencialidad, subdominio institucional).
+
 ## Estado y cuidado de datos
 
 La vista del donante y la migración Supabase son el inicio de la migración del prototipo; las funciones administrativas, aprovisionamiento seguro de usuarios y conexión de producción deben completarse antes de operar con datos reales. La versión de demostración usa `data/demo.json` y datos ficticios. No se afirma que la aplicación esté desplegada, conectada a una cuenta Supabase/Vercel, ni aprobada para producción. Requiere revisión clínica, privacidad/consentimiento, seguridad y pruebas de aceptación del HRDC antes del piloto real.

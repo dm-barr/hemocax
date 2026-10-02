@@ -12,7 +12,7 @@ function siteUrl(): string {
   return 'https://hemocax.vercel.app';
 }
 
-export async function sendEmail({ to, type, message }: { to: string; type: string; message: string }): Promise<MailResult> {
+export async function sendEmail({ to, type, message, subject }: { to: string; type: string; message: string; subject?: string }): Promise<MailResult> {
   if (isSimulated()) return { status: 'DEMO_QUEUED' };
 
   const host = process.env.SMTP_HOST;
@@ -36,13 +36,13 @@ export async function sendEmail({ to, type, message }: { to: string; type: strin
   });
 
   try {
-    const { subject, html, text } = renderEmail({ type, message, siteUrl: siteUrl() });
+    const mail = renderEmail({ type, message, siteUrl: siteUrl(), subject });
     const info = await transport.sendMail({
       from: { name: process.env.EMAIL_FROM_NAME || 'HEMOCAX', address },
       to,
-      subject,
-      html,
-      text,
+      subject: mail.subject,
+      html: mail.html,
+      text: mail.text,
     });
     return { status: 'SENT', externalId: info.messageId };
   } catch (e) {
