@@ -3,15 +3,17 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { getBrowserSupabaseClient } from '@/lib/supabase/client';
 import { callApi } from './api';
-import { Badge, Donor, Empty, Field, Modal, Notify, PageHeader, ROLE_LABEL, Role, fullName, friendlyError } from './ui';
+import { Badge, Donor, Empty, Field, Modal, Notify, PageHeader, Role, fullName, friendlyError, roleTitle } from './ui';
 
 type Account = { user_id: string; dni: string; full_name: string; role: Role; can_release_results: boolean; active: boolean };
 type Created = { dni: string; password: string; name: string; reset?: boolean };
 
-const KINDS: { role: Role; title: string; text: string }[] = [
-  { role: 'STAFF', title: 'Personal del Banco de Sangre', text: 'Registra donantes y donaciones, revisa resultados y envía correos.' },
-  { role: 'ADMIN', title: 'Administrador', text: 'Lo mismo que el personal, y además crea cuentas y ve la actividad.' },
-  { role: 'DONOR', title: 'Donante', text: 'Entra a su portal para ver sus donaciones y resultados.' },
+type Kind = 'NURSE' | 'DOCTOR' | 'ADMIN' | 'DONOR';
+const KINDS: { kind: Kind; title: string; text: string }[] = [
+  { kind: 'NURSE', title: 'Enfermería / personal de apoyo', text: 'Atiende donantes, registra donaciones y envía correos. No libera resultados.' },
+  { kind: 'DOCTOR', title: 'Médico responsable', text: 'Todo lo anterior, y además revisa y libera resultados.' },
+  { kind: 'ADMIN', title: 'Administrador', text: 'Gestiona cuentas, parámetros y reportes, además de lo anterior.' },
+  { kind: 'DONOR', title: 'Donante', text: 'Entra a su portal para ver sus donaciones y resultados.' },
 ];
 
 function generatePassword(): string {
@@ -74,7 +76,7 @@ export default function AccountsTab({ notify, intent }: { notify: Notify; intent
                   <tr key={a.user_id}>
                     <td><b>{a.full_name}</b></td>
                     <td>{a.dni}</td>
-                    <td>{ROLE_LABEL[a.role]}</td>
+                    <td>{roleTitle(a)}</td>
                     <td>{a.role === 'DONOR' ? <span className="muted">—</span> : a.can_release_results ? <Badge tone="ok">Sí</Badge> : <Badge>No</Badge>}</td>
                     <td>{a.active ? <Badge tone="ok">Activa</Badge> : <Badge tone="warn">Inactiva</Badge>}</td>
                     <td className="actions">
@@ -96,7 +98,8 @@ export default function AccountsTab({ notify, intent }: { notify: Notify; intent
 }
 
 function CreateModal({ free, notify, onClose, onCreated }: { free: Donor[]; notify: Notify; onClose: () => void; onCreated: (c: Created) => void }) {
-  const [role, setRole] = useState<Role>('STAFF');
+  const [kind, setKind] = useState<Kind>('NURSE');
+  const role: Role = kind === 'DONOR' ? 'DONOR' : kind === 'ADMIN' ? 'ADMIN' : 'STAFF';
   const [dni, setDni] = useState('');
   const [name, setName] = useState('');
   const [donorId, setDonorId] = useState('');
@@ -115,7 +118,7 @@ function CreateModal({ free, notify, onClose, onCreated }: { free: Donor[]; noti
     try {
       await callApi('/api/admin/users', {
         dni: finalDni, full_name: finalName, role, password,
-        can_release_results: role !== 'DONOR' && canRelease,
+        can_release_results: kind === 'DOCTOR' || (kind === 'ADMIN' && canRelease),
         donor_id: role === 'DONOR' ? Number(donorId) : undefined,
       });
       onCreated({ dni: finalDni, password, name: finalName });
@@ -128,11 +131,11 @@ function CreateModal({ free, notify, onClose, onCreated }: { free: Donor[]; noti
   return (
     <Modal title="Crear cuenta de acceso" onClose={onClose}>
       <form onSubmit={submit}>
-        <p className="form-section">1. ¿Para quién es la cuenta?</p>
+        <p className="form-section">1. ¿Cuál es su puesto?</p>
         <div className="kinds">
           {KINDS.map((k) => (
-            <label key={k.role} className={role === k.role ? 'kind active' : 'kind'}>
-              <input type="radio" name="kind" checked={role === k.role} onChange={() => setRole(k.role)} />
+            <label key={k.kind} className={kind === k.kind ? 'kind active' : 'kind'}>
+              <input type="radio" name="kind" checked={kind === k.kind} onChange={() => setKind(k.kind)} />
               <b>{k.title}</b>
               <span>{k.text}</span>
             </label>
@@ -153,10 +156,10 @@ function CreateModal({ free, notify, onClose, onCreated }: { free: Donor[]; noti
             <Field label="Nombre completo"><input required value={name} onChange={(e) => setName(e.target.value)} /></Field>
           </div>
         )}
-        {role !== 'DONOR' && (
+        {kind === 'ADMIN' && (
           <label className="check">
             <input type="checkbox" checked={canRelease} onChange={(e) => setCanRelease(e.target.checked)} />
-            <span>Puede liberar resultados no críticos (solo para médicos o responsables)</span>
+            <span>También puede liberar resultados no críticos</span>
           </label>
         )}
 
