@@ -4,6 +4,7 @@ export type Params = {
   limits: { M: number; F: number };
   intervals: { M: number; F: number };
   recommendations: string;
+  contactInfo: string;
 };
 
 export const DEFAULT_RECOMMENDATIONS =
@@ -22,5 +23,6 @@ export async function loadParams(supabase: SupabaseClient): Promise<Params> {
     limits: { M: num('male_annual_limit', 4), F: num('female_annual_limit', 3) },
     intervals: { M: num('male_interval_days', base), F: num('female_interval_days', base) },
     recommendations: typeof map.result_recommendations === 'string' ? map.result_recommendations : DEFAULT_RECOMMENDATIONS,
+    contactInfo: typeof map.contact_info === 'string' ? map.contact_info : '',
   };
 }

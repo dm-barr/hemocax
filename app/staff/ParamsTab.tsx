@@ -11,6 +11,7 @@ export default function ParamsTab({ notify, profile }: { notify: Notify; profile
   const [loading, setLoading] = useState(true);
   const [nums, setNums] = useState({ male_interval_days: '90', female_interval_days: '90', male_annual_limit: '4', female_annual_limit: '3' });
   const [recs, setRecs] = useState('');
+  const [contact, setContact] = useState('');
   const [consent, setConsent] = useState<{ version: string; body: string } | null>(null);
   const [consentDraft, setConsentDraft] = useState('');
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -29,6 +30,7 @@ export default function ParamsTab({ notify, profile }: { notify: Notify; profile
       male_annual_limit: String(p.limits.M), female_annual_limit: String(p.limits.F),
     });
     setRecs(p.recommendations);
+    setContact(p.contactInfo);
     if (c.data) { setConsent(c.data); setConsentDraft(c.data.body); }
     const list = (t.data || []) as Template[];
     setTemplates(list);
@@ -107,6 +109,13 @@ export default function ParamsTab({ notify, profile }: { notify: Notify; profile
         <p className="muted">Este texto lo ve el donante en su portal junto con su resultado liberado y la fecha de su próxima donación. Debe validarlo la Jefatura del Banco de Sangre.</p>
         <Field label="Recomendaciones"><textarea rows={4} value={recs} onChange={(e) => setRecs(e.target.value)} /></Field>
         <button className="primary" disabled={busy === 'recs' || !recs.trim()} onClick={() => saveConfig({ result_recommendations: recs.trim() }, 'recs')}>{busy === 'recs' ? 'Guardando…' : 'Guardar recomendaciones'}</button>
+      </div>
+
+      <div className="card">
+        <h3>Dónde y cuándo donar</h3>
+        <p className="muted">Este texto lo ve el donante en su portal, en «¿Dónde donar?». Escribe la dirección, el horario y un teléfono del Banco de Sangre, en lenguaje sencillo.</p>
+        <Field label="Dirección, horario y teléfono"><textarea rows={4} value={contact} onChange={(e) => setContact(e.target.value)} /></Field>
+        <button className="primary" disabled={busy === 'contact' || !contact.trim()} onClick={() => saveConfig({ contact_info: contact.trim() }, 'contact')}>{busy === 'contact' ? 'Guardando…' : 'Guardar datos de contacto'}</button>
       </div>
 
       <div className="card">
