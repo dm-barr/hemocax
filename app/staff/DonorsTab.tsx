@@ -7,7 +7,8 @@ import { Badge, Donor, Empty, Field, Modal, Notify, PageHeader, fullName, friend
 type DonationRow = { donor_id: number; donation_date: string };
 type Filter = 'all' | 'authorized' | 'unauthorized';
 
-const EMPTY_FORM = { dni: '', first_name: '', last_name: '', gender: 'F', birth_date: '', phone: '', email: '', blood_type: 'O', rh_factor: '+', consent: false };
+const EMPTY_FORM = { dni: '', first_name: '', last_name: '', gender: 'F', birth_date: '', phone: '', email: '', blood: '', consent: false };
+const BLOOD_GROUPS = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
 
 export default function DonorsTab({ notify, intent }: { notify: Notify; intent?: string }) {
   const [donors, setDonors] = useState<Donor[]>([]);
@@ -97,7 +98,7 @@ export default function DonorsTab({ notify, intent }: { notify: Notify; intent?:
                   return (
                     <tr key={d.id}>
                       <td><b>{fullName(d)}</b><br /><small>DNI {d.dni}{d.auth_user_id ? ' · tiene cuenta' : ''}</small></td>
-                      <td><span className="blood-type">{d.blood_type}{d.rh_factor}</span></td>
+                      <td>{d.blood_type ? <span className="blood-type">{d.blood_type}{d.rh_factor}</span> : <span className="muted">Sin dato</span>}</td>
                       <td>{d.email || <span className="muted">Sin correo</span>}<br /><small>{d.phone}</small></td>
                       <td>{d.opted_out ? <Badge tone="warn">No quiere correos</Badge> : d.consent_email ? <Badge tone="ok">Autorizado</Badge> : <Badge>Sin autorizar</Badge>}</td>
                       <td>
@@ -128,7 +129,7 @@ export default function DonorsTab({ notify, intent }: { notify: Notify; intent?:
 function DonorForm({ donor, notify, onClose, onSaved }: { donor: Donor | null; notify: Notify; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState(donor ? {
     dni: donor.dni, first_name: donor.first_name, last_name: donor.last_name, gender: donor.gender as string, birth_date: donor.birth_date,
-    phone: donor.phone, email: donor.email ?? '', blood_type: donor.blood_type, rh_factor: donor.rh_factor, consent: false,
+    phone: donor.phone, email: donor.email ?? '', blood: donor.blood_type ? `${donor.blood_type}${donor.rh_factor}` : '', consent: false,
   } : EMPTY_FORM);
   const [busy, setBusy] = useState(false);
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
@@ -140,7 +141,8 @@ function DonorForm({ donor, notify, onClose, onSaved }: { donor: Donor | null; n
     const supabase = getBrowserSupabaseClient();
     const data = {
       first_name: form.first_name.trim(), last_name: form.last_name.trim(), gender: form.gender, birth_date: form.birth_date,
-      phone: form.phone.trim(), email: form.email.trim() || null, blood_type: form.blood_type, rh_factor: form.rh_factor,
+      phone: form.phone.trim(), email: form.email.trim() || null,
+      blood_type: form.blood ? form.blood.slice(0, -1) : null, rh_factor: form.blood ? form.blood.slice(-1) : null,
     };
     const { error } = donor
       ? await supabase.from('donors').update({ ...data, ...(data.email ? {} : { consent_email: false }) }).eq('id', donor.id)
@@ -177,10 +179,12 @@ function DonorForm({ donor, notify, onClose, onSaved }: { donor: Donor | null; n
         </div>
 
         <p className="form-section">Tipo de sangre</p>
-        <div className="form-grid">
-          <Field label="Grupo"><select value={form.blood_type} onChange={(e) => set({ blood_type: e.target.value })}>{['O', 'A', 'B', 'AB'].map((x) => <option key={x}>{x}</option>)}</select></Field>
-          <Field label="Factor RH"><select value={form.rh_factor} onChange={(e) => set({ rh_factor: e.target.value })}><option value="+">Positivo (+)</option><option value="-">Negativo (−)</option></select></Field>
-        </div>
+        <Field label="Grupo sanguíneo" hint="Si el donante no lo sabe, déjalo en «No sé» y complétalo cuando se lo midan.">
+          <select value={form.blood} onChange={(e) => set({ blood: e.target.value })}>
+            <option value="">No sé</option>
+            {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+        </Field>
 
         {!donor && (
           <label className="check">
@@ -222,7 +226,7 @@ function DonationModal({ donor, donations, limit, notify, onClose, onSaved }: { 
   return (
     <Modal title="Registrar donación" onClose={onClose}>
       <form onSubmit={submit}>
-        <p className="modal-lead">Donante: <b>{fullName(donor)}</b> · {donor.blood_type}{donor.rh_factor}</p>
+        <p className="modal-lead">Donante: <b>{fullName(donor)}</b>{donor.blood_type ? ` · ${donor.blood_type}${donor.rh_factor}` : ''}</p>
         <Field label="Fecha de la donación"><input required type="date" max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         <Field label="Notas (opcional)"><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <p className={reached ? 'notice-box warn' : 'notice-box'}>
