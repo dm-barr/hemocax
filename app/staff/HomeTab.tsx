@@ -2,118 +2,148 @@
 
 import { useEffect, useState } from 'react';
 import { getBrowserSupabaseClient } from '@/lib/supabase/client';
-import { Go, PageHeader, Profile, ROLE_LABEL } from './ui';
+import { limaToday } from '@/lib/eligibility';
+import DonorFicha from './DonorFicha';
+import { normalizeText, useDirectory } from './useDirectory';
+import { Badge, Go, Notify, PageHeader, Profile, fullName, isAuthorized, roleTitle } from './ui';
 
-type Counts = { donors: number; donations: number; pending: number; sent: number; unauthorized: number; overdue: number; unapproved: number };
+type PendingRow = { id: number; created_at: string; donations: { donors: { first_name: string; last_name: string } } };
 
-const ROLE_HELP: Record<string, string> = {
-  ADMIN: 'Puedes hacer todo: registrar donantes y donaciones, liberar resultados, enviar correos y crear cuentas de acceso para tu equipo.',
-  STAFF: 'Puedes registrar donantes y donaciones, revisar resultados y enviar correos a los donantes.',
-};
+const hoursSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 3_600_000);
 
-export default function HomeTab({ profile, go }: { profile: Profile; go: Go }) {
-  const [counts, setCounts] = useState<Counts | null>(null);
+export default function HomeTab({ profile, go, notify }: { profile: Profile; go: Go; notify: Notify }) {
+  const { donors, donations, params, eligibility, loading, reload } = useDirectory(notify);
+  const [query, setQuery] = useState('');
+  const [fichaId, setFichaId] = useState<number | null>(null);
+  const [pending, setPending] = useState<PendingRow[] | null>(null);
+  const [unapproved, setUnapproved] = useState(0);
+  const isAdmin = profile.role === 'ADMIN';
+  const isDoctor = profile.can_release_results;
 
   useEffect(() => {
     (async () => {
       const supabase = getBrowserSupabaseClient();
-      const head = { count: 'exact', head: true } as const;
-      const year = new Date().getFullYear();
-      const cutoff = new Date(Date.now() - 36 * 3_600_000).toISOString();
-      const [donors, donations, pending, sent, unauthorized, overdue, unapproved] = await Promise.all([
-        supabase.from('donors').select('id', head),
-        supabase.from('donations').select('id', head).gte('donation_date', `${year}-01-01`),
-        supabase.from('donation_results').select('id', head).eq('status', 'PENDING'),
-        supabase.from('communications').select('id', head).in('status', ['SENT', 'DELIVERED', 'READ']),
-        supabase.from('donors').select('id', head).eq('consent_email', false),
-        supabase.from('donation_results').select('id', head).eq('status', 'PENDING').eq('critical', false).lt('created_at', cutoff),
-        supabase.from('message_templates').select('type', head).eq('approved', false),
+      const [p, t] = await Promise.all([
+        supabase.from('donation_results')
+          .select('id,created_at,donations!inner(donors!inner(first_name,last_name))')
+          .eq('status', 'PENDING').eq('critical', false).order('created_at', { ascending: true }).limit(50),
+        supabase.from('message_templates').select('type', { count: 'exact', head: true }).eq('approved', false),
       ]);
-      setCounts({
-        donors: donors.count ?? 0,
-        donations: donations.count ?? 0,
-        pending: pending.count ?? 0,
-        sent: sent.count ?? 0,
-        unauthorized: unauthorized.count ?? 0,
-        overdue: overdue.count ?? 0,
-        unapproved: unapproved.count ?? 0,
-      });
+      setPending((p.data || []) as unknown as PendingRow[]);
+      setUnapproved(t.count ?? 0);
     })();
   }, []);
 
   const firstName = profile.full_name.split(' ')[0];
-  const attention: { text: string; action: string; tab: 'results' | 'donors' | 'params' }[] = [];
-  if (counts && counts.overdue > 0) attention.push({ text: `${counts.overdue} resultado(s) llevan más de 36 horas esperando: la meta es liberarlos en 48.`, action: 'Revisar ahora', tab: 'results' });
-  if (counts && counts.unapproved > 0 && profile.role === 'ADMIN') attention.push({ text: `${counts.unapproved} mensaje(s) automático(s) sin aprobar: no se enviarán recordatorios hasta que la Jefatura los apruebe.`, action: 'Aprobar mensajes', tab: 'params' });
-  if (counts && counts.pending > 0) attention.push({ text: `${counts.pending} resultado(s) esperan tu revisión.`, action: 'Ver resultados', tab: 'results' });
-  if (counts && counts.unauthorized > 0) attention.push({ text: `${counts.unauthorized} donante(s) todavía no autorizan recibir correos.`, action: 'Ver donantes', tab: 'donors' });
+  const q = normalizeText(query.trim());
+  const matches = q.length < 2 ? [] : donors.filter((d) => d.dni.startsWith(q) || normalizeText(fullName(d)).includes(q) || d.dni.includes(q));
+  const shown = matches.slice(0, 6);
+  const looksLikeDni = /^\d{8}$/.test(query.trim());
+
+  const today = limaToday();
+  const todays = donations.filter((d) => d.donation_date === today).map((d) => donors.find((x) => x.id === d.donor_id)).filter((d): d is NonNullable<typeof d> => !!d);
+  const overdue = (pending ?? []).filter((r) => hoursSince(r.created_at) >= 36).length;
+  const unauthorized = donors.filter((d) => d.status === 'ACTIVE' && !isAuthorized(d)).length;
+  const ficha = fichaId !== null ? donors.find((d) => d.id === fichaId) : undefined;
 
   return (
     <>
-      <PageHeader
-        title={`Hola, ${firstName}`}
-        help={`Tu perfil: ${ROLE_LABEL[profile.role]}. ${ROLE_HELP[profile.role] ?? ''}`}
-      />
+      <PageHeader title={`Hola, ${firstName}`} help={`${roleTitle(profile)}. Empieza buscando al donante que tienes enfrente.`} />
 
-      <h2 className="section-title">Así funciona HEMOCAX, paso a paso</h2>
-      <div className="steps">
-        <div className="card step">
-          <span className="step-num">1</span>
-          <h3>Registra al donante</h3>
-          <p>Guarda sus datos y su tipo de sangre. Pídele su correo y si acepta que le escribamos.</p>
-          <button className="primary small" onClick={() => go('donors', 'new')}>Registrar donante</button>
-        </div>
-        <div className="card step">
-          <span className="step-num">2</span>
-          <h3>Anota su donación</h3>
-          <p>Cuando done sangre, registra la fecha. El sistema cuida el máximo de donaciones por año.</p>
-          <button className="secondary small" onClick={() => go('donors')}>Ir a donantes</button>
-        </div>
-        <div className="card step">
-          <span className="step-num">3</span>
-          <h3>Libera su resultado</h3>
-          <p>Si el resultado es normal, libéralo para que el donante lo vea en su portal.</p>
-          <button className="secondary small" onClick={() => go('results')}>
-            Ver resultados{counts && counts.pending > 0 ? ` (${counts.pending} pendientes)` : ''}
-          </button>
-        </div>
-        <div className="card step">
-          <span className="step-num">4</span>
-          <h3>Avísale por correo</h3>
-          <p>Avisa de un resultado o convoca a varios donantes a la vez con una campaña.</p>
-          <button className="secondary small" onClick={() => go('campaigns')}>Ir a campañas</button>
-        </div>
-      </div>
-
-      <h2 className="section-title">Resumen</h2>
-      <div className="stats">
-        <div className="card stat"><span>Donantes registrados</span><strong>{counts?.donors ?? '…'}</strong></div>
-        <div className="card stat"><span>Donaciones este año</span><strong>{counts?.donations ?? '…'}</strong></div>
-        <div className="card stat"><span>Resultados por revisar</span><strong>{counts?.pending ?? '…'}</strong></div>
-        <div className="card stat"><span>Correos enviados</span><strong>{counts?.sent ?? '…'}</strong></div>
-      </div>
-
-      <h2 className="section-title">Requiere tu atención</h2>
-      <div className="card">
-        {!counts && <p className="muted">Cargando…</p>}
-        {counts && attention.length === 0 && <p className="muted">Todo al día. No hay nada pendiente.</p>}
-        {attention.map((a) => (
-          <div className="attention" key={a.text}>
-            <span>{a.text}</span>
-            <button className="secondary small" onClick={() => go(a.tab)}>{a.action}</button>
+      <div className="card attend">
+        <h2>Atender a un donante</h2>
+        <p className="muted">Escribe su DNI o su nombre. Verás si puede donar hoy y podrás registrar su donación.</p>
+        <input
+          className="search big"
+          autoFocus
+          inputMode="search"
+          placeholder="DNI o nombre del donante"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Buscar donante por DNI o nombre"
+        />
+        {loading && q.length >= 2 && <p className="muted">Buscando…</p>}
+        {!loading && q.length >= 2 && shown.length > 0 && (
+          <ul className="results-list">
+            {shown.map((d) => {
+              const e = eligibility.get(d.id)!;
+              return (
+                <li key={d.id}>
+                  <button className="result-row" onClick={() => setFichaId(d.id)}>
+                    <span><b>{fullName(d)}</b><small>DNI {d.dni}{d.blood_type ? ` · ${d.blood_type}${d.rh_factor}` : ''}</small></span>
+                    {e.state === 'APTO' ? <Badge tone="ok">Puede donar</Badge> : e.state === 'INACTIVO' ? <Badge>Inactivo</Badge> : <Badge tone="warn">{e.state === 'MAXIMO' ? 'Máximo anual' : 'Aún no puede'}</Badge>}
+                  </button>
+                </li>
+              );
+            })}
+            {matches.length > shown.length && <li className="more">Hay {matches.length - shown.length} más: escribe un poco más para afinar.</li>}
+          </ul>
+        )}
+        {!loading && q.length >= 2 && shown.length === 0 && (
+          <div className="notice-box warn not-found">
+            <span>{looksLikeDni ? `No hay ningún donante con el DNI ${query.trim()}.` : 'No encontramos a nadie con ese nombre.'}</span>
+            <button className="primary small" onClick={() => go('donors', looksLikeDni ? `new:${query.trim()}` : 'new')}>Registrar donante nuevo</button>
           </div>
-        ))}
+        )}
       </div>
 
-      {profile.role === 'ADMIN' && (
-        <div className="card admin-card">
-          <div>
-            <h3>Cuentas de acceso</h3>
-            <p>Crea las cuentas para que tu equipo y los donantes puedan entrar al portal con su DNI.</p>
-          </div>
-          <button className="secondary" onClick={() => go('accounts', 'new')}>Crear una cuenta</button>
-        </div>
+      <div className="columns home-columns">
+        <section className="card">
+          <h3>Resultados por revisar</h3>
+          <p className="muted">{isDoctor ? 'Ábrelos para liberarlos o marcarlos como críticos.' : 'Los revisa y libera el médico responsable.'}</p>
+          {pending === null ? <p className="muted">Cargando…</p> : pending.length === 0 ? <p className="ok-line">No hay resultados pendientes.</p> : (
+            <ul className="mini-list">
+              {pending.slice(0, 5).map((r) => {
+                const h = hoursSince(r.created_at);
+                return (
+                  <li key={r.id}>
+                    <span>{r.donations.donors.first_name} {r.donations.donors.last_name}</span>
+                    <Badge tone={h >= 48 ? 'danger' : h >= 36 ? 'warn' : 'muted'}>{h >= 48 ? `${h} h · pasó la meta` : `hace ${h} h`}</Badge>
+                  </li>
+                );
+              })}
+              {pending.length > 5 && <li className="more">y {pending.length - 5} más…</li>}
+            </ul>
+          )}
+          <button className="secondary small" onClick={() => go('results')}>Ir a Resultados{pending && pending.length ? ` (${pending.length})` : ''}</button>
+        </section>
+
+        <section className="card">
+          <h3>Donaciones de hoy</h3>
+          <p className="muted">Las que se registraron en el día.</p>
+          {loading ? <p className="muted">Cargando…</p> : todays.length === 0 ? <p className="muted">Todavía no se registró ninguna hoy.</p> : (
+            <ul className="mini-list">
+              {todays.slice(0, 8).map((d, i) => (
+                <li key={`${d.id}-${i}`}><button className="link-btn" onClick={() => setFichaId(d.id)}>{fullName(d)}</button>{d.blood_type && <span className="blood-type">{d.blood_type}{d.rh_factor}</span>}</li>
+              ))}
+            </ul>
+          )}
+          <button className="secondary small" onClick={() => go('donors')}>Ver todos los donantes</button>
+        </section>
+      </div>
+
+      {(overdue > 0 || unauthorized > 0 || (isAdmin && unapproved > 0)) && (
+        <section className="card">
+          <h3>Requiere atención</h3>
+          {overdue > 0 && (
+            <div className="attention"><span>{overdue} resultado(s) llevan más de 36 horas esperando: la meta es liberarlos en 48.</span><button className="secondary small" onClick={() => go('results')}>Revisar ahora</button></div>
+          )}
+          {isAdmin && unapproved > 0 && (
+            <div className="attention"><span>{unapproved} mensaje(s) automático(s) sin aprobar: no se enviarán recordatorios hasta que se aprueben.</span><button className="secondary small" onClick={() => go('params')}>Aprobar mensajes</button></div>
+          )}
+          {unauthorized > 0 && (
+            <div className="attention"><span>{unauthorized} donante(s) todavía no autorizan recibir correos.</span><button className="secondary small" onClick={() => go('donors')}>Ver donantes</button></div>
+          )}
+        </section>
       )}
+
+      <div className="home-links">
+        <button className="link-card" onClick={() => go('help')}><b>¿Necesitas ayuda?</b><span>Guía paso a paso para tu puesto</span></button>
+        {isAdmin && <button className="link-card" onClick={() => go('accounts', 'new')}><b>Crear una cuenta</b><span>Para el personal o un donante</span></button>}
+        <button className="link-card" onClick={() => go('donors', 'new')}><b>Registrar donante nuevo</b><span>Una persona que viene por primera vez</span></button>
+      </div>
+
+      {ficha && <DonorFicha donor={ficha} donations={donations} params={params} eligibility={eligibility.get(ficha.id)!} isAdmin={isAdmin} notify={notify} onClose={() => setFichaId(null)} onChanged={reload} />}
     </>
   );
 }

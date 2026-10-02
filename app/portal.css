@@ -127,3 +127,95 @@ details summary{cursor:pointer;font-size:13px;color:#4b586a;margin-top:8px}
 .recommendations b{font-size:12px;color:#256545}
 .recommendations p{margin:6px 0 0;font-size:12.5px;line-height:1.65;color:#2c5a43}
 .panel .consent-text{max-height:260px}
+
+/* ---- Legibilidad y uso en tablet/escritorio por personal de salud ---- */
+body{font-size:15px}
+.primary,.secondary,.danger{font-size:14.5px;min-height:44px;padding:11px 18px}
+.primary.small,.secondary.small,.danger.small{font-size:13.5px;min-height:38px;padding:8px 14px}
+.primary.big{font-size:16px;min-height:52px;padding:13px 26px}
+.nav-item{font-size:15px;padding:12px 14px;min-height:44px}
+.nav-group{font-size:11px}
+.page-head h1{font-size:28px}
+.page-head p{font-size:15px}
+.card p,.card li{font-size:14.5px}
+.table{font-size:14.5px}
+.table th{font-size:11.5px}
+.field{font-size:14px}
+.field input,.field select,.field textarea,.search,.select-inline{font-size:15px}
+.field input,.field select{min-height:44px}
+.chip{font-size:13.5px;padding:10px 15px;min-height:40px}
+.badge{font-size:12.5px}
+.check{font-size:14.5px}
+.notice-box,.quote{font-size:14.5px}
+.muted{font-size:14px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #d9798b;outline-offset:2px}
+.modal.wide{width:min(100%,760px)}
+
+/* ---- Inicio: atender a un donante ---- */
+.attend{padding:24px}
+.attend h2{font:800 20px Manrope,sans-serif;margin:0 0 4px}
+.search.big{max-width:none;width:100%;font-size:19px;min-height:60px;padding:14px 18px;margin:12px 0 4px;border:2px solid #d9798b44;border-radius:12px;display:block}
+.search.big:focus{border-color:#d94e68}
+.results-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.result-row{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;min-height:62px}
+.result-row:hover{border-color:#d9798b;background:#fff9fa}
+.result-row b{display:block;font-size:16px}
+.result-row small{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+.results-list .more{font-size:13px;color:var(--muted);padding:4px 2px}
+.not-found{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.home-columns{margin-top:14px}
+.home-columns .card{margin:0}
+.mini-list{list-style:none;margin:10px 0 14px;padding:0}
+.mini-list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #f0f2f5;font-size:14.5px}
+.mini-list li:first-child{border-top:0}
+.mini-list .more{color:var(--muted);font-size:13px}
+.ok-line{color:#2f7a55;font-weight:600;margin:12px 0}
+.link-btn{border:0;background:none;padding:0;color:var(--ink);font-weight:600;font-size:14.5px;text-align:left;text-decoration:underline;text-decoration-color:#d9798b66}
+.home-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:6px}
+.link-card{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:16px 18px;min-height:76px}
+.link-card:hover{border-color:#d9798b}
+.link-card b{font-size:15px}
+.link-card span{color:var(--muted);font-size:13.5px}
+
+/* ---- Ficha del donante ---- */
+.ficha-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin:4px 0 16px}
+.ficha-head h3{font:800 22px Manrope,sans-serif;margin:0 0 4px;letter-spacing:-.4px}
+.ficha-head p{margin:2px 0;font-size:15px}
+.blood-big{min-width:78px;text-align:center;padding:12px 14px;border-radius:14px;background:var(--pale);color:var(--red);font:800 28px Manrope,sans-serif;line-height:1.1}
+.blood-big span{display:block;font:700 10px 'DM Sans',sans-serif;letter-spacing:.8px;color:#a2777f;margin-top:4px}
+.blood-big small{font-size:14px;color:var(--muted)}
+.ficha-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.ficha-card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;background:#fafbfc}
+.ficha-card span{font-size:12px;color:var(--muted);font-weight:600}
+.ficha-card b{font-size:17px}
+.ficha-card small{color:#4b586a;font-size:13px;line-height:1.5}
+.ficha-card.ok{background:#f0f9f4;border-color:#cfe9da}
+.ficha-card.ok b{color:#256545}
+.ficha-card.warn{background:#fff8ec;border-color:#f3dfb8}
+.ficha-card.warn b{color:#8a5a00}
+.ficha-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.ficha-title{font:700 15px Manrope,sans-serif;margin:20px 0 8px}
+.ficha-history{list-style:none;margin:0;padding:0}
+.ficha-history li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f0f2f5;font-size:14.5px}
+.table.clickable tbody tr{cursor:pointer}
+.table.clickable tbody tr:hover td{background:#fff9fa}
+
+/* ---- Ayuda ---- */
+.help-section{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;padding:4px 20px}
+.help-section>summary{cursor:pointer;font:700 17px Manrope,sans-serif;padding:16px 0;list-style-position:inside}
+.guide{border-top:1px solid #f0f2f5;padding:14px 0}
+.guide h4{margin:0 0 8px;font:700 15.5px Manrope,sans-serif}
+.guide ol{margin:0;padding-left:22px;line-height:1.75;font-size:15px}
+.guide li{margin-bottom:4px}
+.glossary{margin:0 0 12px}
+.glossary div{padding:10px 0;border-top:1px solid #f0f2f5}
+.glossary dt{font-weight:700;font-size:15px}
+.glossary dd{margin:3px 0 0;color:#4b586a;font-size:14.5px;line-height:1.6}
+
+@media print{
+  .side,.toasts,.head-actions,.page-head button,.home-links{display:none!important}
+  .shell{display:block}
+  .main{max-width:none;padding:0}
+  .help-section{break-inside:avoid;border:0}
+  details:not([open])>*:not(summary){display:block}
+}

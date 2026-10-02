@@ -6,19 +6,20 @@ import AuditTab from './AuditTab';
 import CampaignsTab from './CampaignsTab';
 import DonorsTab from './DonorsTab';
 import EmailsTab from './EmailsTab';
+import HelpTab from './HelpTab';
 import HomeTab from './HomeTab';
 import MyAccountTab from './MyAccountTab';
 import ParamsTab from './ParamsTab';
 import ReportsTab from './ReportsTab';
 import ResultsTab from './ResultsTab';
-import { Go, Notify, Profile, ROLE_LABEL, TabKey } from './ui';
+import { Go, Notify, Profile, TabKey, roleTitle } from './ui';
 
 const NAV: { group: string; adminOnly?: boolean; items: { key: TabKey; label: string }[] }[] = [
   { group: 'Trabajo diario', items: [{ key: 'home', label: 'Inicio' }, { key: 'donors', label: 'Donantes' }, { key: 'results', label: 'Resultados' }] },
   { group: 'Comunicación', items: [{ key: 'campaigns', label: 'Campañas e información' }, { key: 'emails', label: 'Correos enviados' }] },
   { group: 'Seguimiento', items: [{ key: 'reports', label: 'Reportes' }] },
   { group: 'Administración', adminOnly: true, items: [{ key: 'accounts', label: 'Cuentas de acceso' }, { key: 'params', label: 'Parámetros' }, { key: 'audit', label: 'Actividad' }] },
-  { group: 'Mi perfil', items: [{ key: 'account', label: 'Mi cuenta' }] },
+  { group: 'Ayuda y cuenta', items: [{ key: 'help', label: 'Ayuda' }, { key: 'account', label: 'Mi cuenta' }] },
 ];
 
 type Toast = { id: number; message: string; kind: 'ok' | 'error' };
@@ -52,13 +53,14 @@ export default function StaffPanel({ profile, onLogout }: { profile: Profile; on
         </nav>
         <div className="side-user">
           <b>{profile.full_name}</b>
-          <span>{ROLE_LABEL[profile.role]}</span>
+          <span>{roleTitle(profile)}</span>
           <button className="secondary small" onClick={onLogout}>Cerrar sesión</button>
         </div>
       </aside>
 
       <main className="main">
-        {nav.tab === 'home' && <HomeTab profile={profile} go={go} />}
+        {nav.tab === 'home' && <HomeTab profile={profile} go={go} notify={notify} />}
+        {nav.tab === 'help' && <HelpTab profile={profile} />}
         {nav.tab === 'donors' && <DonorsTab notify={notify} intent={nav.intent} isAdmin={isAdmin} />}
         {nav.tab === 'results' && <ResultsTab canRelease={profile.can_release_results} notify={notify} />}
         {nav.tab === 'campaigns' && <CampaignsTab notify={notify} />}

@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { getBrowserSupabaseClient } from '@/lib/supabase/client';
-import { Field, Notify, PageHeader, Profile, ROLE_LABEL, friendlyError } from './ui';
+import { Field, Notify, PageHeader, Profile, friendlyError, roleTitle } from './ui';
 
 export default function MyAccountTab({ profile, notify }: { profile: Profile; notify: Notify }) {
   const [password, setPassword] = useState('');
@@ -26,7 +26,7 @@ export default function MyAccountTab({ profile, notify }: { profile: Profile; no
       <PageHeader title="Mi cuenta" help="Tus datos de acceso y el cambio de contraseña." />
       <div className="card">
         <h3>{profile.full_name}</h3>
-        <p className="muted">DNI {profile.dni} · {ROLE_LABEL[profile.role]}{profile.can_release_results ? ' · puede liberar resultados' : ''}</p>
+        <p className="muted">DNI {profile.dni} · {roleTitle(profile)}</p>
       </div>
       <form className="card" onSubmit={change}>
         <h3>Cambiar mi contraseña</h3>

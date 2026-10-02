@@ -5,7 +5,7 @@ import { limaToday } from '@/lib/eligibility';
 
 export type Role = 'ADMIN' | 'STAFF' | 'DONOR';
 export type Profile = { dni: string; full_name: string; role: Role; can_release_results: boolean };
-export type TabKey = 'home' | 'donors' | 'results' | 'campaigns' | 'emails' | 'reports' | 'accounts' | 'params' | 'audit' | 'account';
+export type TabKey = 'home' | 'donors' | 'results' | 'campaigns' | 'emails' | 'reports' | 'accounts' | 'params' | 'audit' | 'help' | 'account';
 export type Notify = (message: string, kind?: 'ok' | 'error') => void;
 export type Go = (tab: TabKey, intent?: string) => void;
 
@@ -22,6 +22,13 @@ export const todayISO = limaToday;
 type Tone = 'ok' | 'warn' | 'danger' | 'muted' | 'info';
 
 export const ROLE_LABEL: Record<Role, string> = { ADMIN: 'Administrador', STAFF: 'Personal del Banco de Sangre', DONOR: 'Donante' };
+
+/** Nombre del puesto según permisos: quien puede liberar resultados es el médico responsable. */
+export function roleTitle(p: { role: Role; can_release_results: boolean }): string {
+  if (p.role === 'ADMIN') return 'Administrador';
+  if (p.role === 'DONOR') return 'Donante';
+  return p.can_release_results ? 'Médico responsable' : 'Enfermería / personal de apoyo';
+}
 
 export const RESULT_LABEL: Record<string, { text: string; tone: Tone }> = {
   PENDING: { text: 'Pendiente de revisión', tone: 'warn' },
@@ -121,16 +128,24 @@ export function Field({ label, hint, children, className }: { label: string; hin
   );
 }
 
-export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+const modalStack: number[] = [];
+let modalCounter = 0;
+
+export function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const id = ++modalCounter;
+    modalStack.push(id);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && modalStack[modalStack.length - 1] === id) onClose(); };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      modalStack.splice(modalStack.indexOf(id), 1);
+    };
   }, [onClose]);
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label={title}>
+      <div className={wide ? 'modal wide' : 'modal'} role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-head">
           <h2>{title}</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Cerrar">×</button>
