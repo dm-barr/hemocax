@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { deliverCommunication } from '@/lib/communications';
+import { isSimulated } from '@/lib/email';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 
 type Donor = { id: number; first_name: string; email: string; gender: 'M' | 'F'; birth_date: string };
@@ -11,21 +13,7 @@ const MESSAGES: Record<string, (firstName: string) => string> = {
   DONATION_THANKS: (n) => `Hola ${n}. Gracias por tu donación voluntaria. Cuídate y sigue las recomendaciones que te brindó el personal de salud.`,
 };
 
-async function dispatchToWorker(payload: object) {
-  const url = process.env.AUTOMATION_WEBHOOK_URL;
-  if (!url) return { dispatched: false as const };
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-hemocax-webhook-secret': process.env.AUTOMATION_WEBHOOK_SECRET || '' },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) throw new Error(`El servicio de correo respondió HTTP ${response.status}`);
-    return { dispatched: true as const };
-  } catch (e) {
-    return { dispatched: true as const, error: e instanceof Error ? e.message : 'Error desconocido' };
-  }
-}
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   const secret = process.env.AUTOMATION_RUN_SECRET;
@@ -99,7 +87,8 @@ export async function POST(request: Request) {
     }
   }
 
-  if (body?.dry_run === true) {
+  // Si el envío está simulado no se registra nada: una fila simulada bloquearía el envío real de ese año.
+  if (body?.dry_run === true || isSimulated()) {
     return NextResponse.json({ type, eligible: candidates.length, donors: candidates.map((c) => c.donor) });
   }
 
@@ -119,27 +108,12 @@ export async function POST(request: Request) {
       })
       .select('*')
       .single();
-    if (insertError) {
-      if (insertError.code === '23505') continue; // ya se envió este tipo para este donante/periodo
-      continue;
-    }
-    const { dispatched, error: dispatchError } = await dispatchToWorker({
-      communication_id: row.id,
-      donor_id: donor.id,
-      email: donor.email,
-      recipient_name: donor.first_name,
-      message,
-      type,
-    });
-    if (!dispatched) {
-      await service.from('communications').update({ status: 'DEMO_QUEUED' }).eq('id', row.id);
-    } else if (dispatchError) {
-      await service.from('communications').update({ status: 'FAILED', error_message: dispatchError }).eq('id', row.id);
-    }
-    created.push(row);
+    if (insertError || !row) continue; // 23505: ya se envió este tipo para este donante/periodo
+    const result = await deliverCommunication(service, row);
+    created.push({ ...row, status: result.status });
   }
 
-  await service.from('audit_logs').insert({ action: 'AUTOMATION_RUN', entity: 'automation', actor_dni: 'PYTHON', detail: { type, count: created.length } });
+  await service.from('audit_logs').insert({ action: 'AUTOMATION_RUN', entity: 'automation', actor_dni: 'SISTEMA', detail: { type, count: created.length } });
 
   return NextResponse.json({ type, count: created.length, communications: created }, { status: 202 });
 }
