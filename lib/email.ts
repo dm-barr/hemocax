@@ -1,19 +1,16 @@
 import nodemailer from 'nodemailer';
-
-const SUBJECTS: Record<string, string> = {
-  BIRTHDAY: '¡Feliz cumpleaños de parte de HEMOCAX!',
-  RETURN_REMINDER: 'Ya puedes volver a donar sangre',
-  DONATION_THANKS: 'Gracias por tu donación de sangre',
-  FREQUENT_DONOR: 'Reconocimiento a tu compromiso como donante',
-  CAMPAIGN: 'Campaña del Banco de Sangre HRDC',
-  MANUAL: 'Mensaje del Banco de Sangre HRDC',
-  RESULT: 'Tienes un resultado disponible en tu portal HEMOCAX',
-};
+import { renderEmail } from './emailTemplate';
 
 export type MailResult = { status: 'SENT' | 'FAILED' | 'DEMO_QUEUED'; externalId?: string; error?: string };
 
 /** Solo se envía de verdad si AUTOMATION_DRY_RUN=false; cualquier otro valor simula el envío. */
 export const isSimulated = () => process.env.AUTOMATION_DRY_RUN !== 'false';
+
+function siteUrl(): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return 'https://hemocax.vercel.app';
+}
 
 export async function sendEmail({ to, type, message }: { to: string; type: string; message: string }): Promise<MailResult> {
   if (isSimulated()) return { status: 'DEMO_QUEUED' };
@@ -39,11 +36,13 @@ export async function sendEmail({ to, type, message }: { to: string; type: strin
   });
 
   try {
+    const { subject, html, text } = renderEmail({ type, message, siteUrl: siteUrl() });
     const info = await transport.sendMail({
       from: { name: process.env.EMAIL_FROM_NAME || 'HEMOCAX', address },
       to,
-      subject: SUBJECTS[type] ?? SUBJECTS.MANUAL,
-      text: message,
+      subject,
+      html,
+      text,
     });
     return { status: 'SENT', externalId: info.messageId };
   } catch (e) {
