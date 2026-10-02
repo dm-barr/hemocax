@@ -68,11 +68,11 @@ export default function Home() {
 
   if (!profile) return <main className="login-wrap"><form className="login" onSubmit={login}>
     <div className="brand"><span className="brand-icon">H</span><span>HEMO<span className="accent">CAX</span></span></div>
-    <p className="eyebrow">BANCO DE SANGRE · HRDC</p><h1>Bienvenido</h1><p className="muted">Ingresa a tu portal de donante.</p>
+    <p className="eyebrow">BANCO DE SANGRE · HRDC</p><h1>Bienvenido</h1><p className="muted">Entra con tu DNI y tu contraseña. Sirve tanto para donantes como para el personal del Banco de Sangre.</p>
     <label>DNI<input inputMode="numeric" autoComplete="username" maxLength={8} value={dni} onChange={e => setDni(e.target.value.replace(/\D/g, ''))} placeholder="8 dígitos" required /></label>
     <label>Contraseña<input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required /></label>
     {error && <p className="error" role="alert">{error}</p>}<button className="primary" disabled={busy}>{busy ? 'Ingresando…' : 'Ingresar'}</button>
-    <p className="privacy">Acceso protegido. Si necesitas ayuda, contacta al Banco de Sangre.</p>
+    <p className="privacy">¿No tienes cuenta o olvidaste tu contraseña? Pídela al personal del Banco de Sangre.</p>
   </form></main>;
 
   const year = new Date().getFullYear();
