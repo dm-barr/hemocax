@@ -279,3 +279,26 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .dp-error{color:#b3263f;font-size:17px!important;font-weight:600}
 .dp-footer{text-align:center;color:#7d8999;font-size:14px;line-height:1.7;margin-top:22px}
 @media(min-width:700px){.dp-hero h1{font-size:34px}}
+
+/* ---- Portal del donante en pantallas anchas ---- */
+.dp-hero-text{min-width:0}
+@media(min-width:900px){
+  .dp{max-width:1100px;padding:0 36px 56px}
+  .dp-top{padding:20px 0}
+  .dp-hero{display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px;padding:40px 44px;margin:8px 0 24px;border-radius:24px}
+  .dp-hero h1{font-size:40px;line-height:1.15;margin-bottom:14px}
+  .dp-hero p{font-size:20px;max-width:34em}
+  .dp-hello{font-size:20px!important;margin-bottom:8px!important}
+  .dp-blood{margin:0;flex-direction:column;justify-content:center;text-align:center;min-width:200px;padding:24px 28px;border-radius:20px}
+  .dp-blood span{font-size:17px}
+  .dp-blood b{font-size:52px;line-height:1.1;margin-top:4px}
+  .dp-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:24px;align-items:start}
+  .dp-col{display:flex;flex-direction:column;min-width:0}
+  .dp-card{padding:26px 28px;border-radius:20px}
+  .dp-card h2{font-size:24px;margin-bottom:12px}
+  .dp-message{font-size:18px}
+  .dp-footer{margin-top:34px}
+}
+@media(min-width:1400px){
+  .dp{max-width:1200px}
+}

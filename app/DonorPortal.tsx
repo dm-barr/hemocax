@@ -114,14 +114,18 @@ export default function DonorPortal({ profile, onLogout }: { profile: Profile; o
       <DpTop onLogout={onLogout} />
 
       <section className={`dp-hero ${hero.tone}`}>
-        <p className="dp-hello">Hola, {donor.first_name}</p>
-        <h1>{hero.title}</h1>
-        <p>{hero.text}</p>
+        <div className="dp-hero-text">
+          <p className="dp-hello">Hola, {donor.first_name}</p>
+          <h1>{hero.title}</h1>
+          <p>{hero.text}</p>
+        </div>
         <div className="dp-blood"><span>Tu grupo de sangre</span><b>{donor.blood_type ? `${donor.blood_type}${donor.rh_factor}` : 'Aún no registrado'}</b></div>
       </section>
 
       {message && <p className="dp-message" role="status">{message}</p>}
 
+      <div className="dp-grid">
+      <div className="dp-col">
       <section className="dp-card">
         <h2>Tu resultado</h2>
         {released.length === 0 ? (
@@ -160,6 +164,8 @@ export default function DonorPortal({ profile, onLogout }: { profile: Profile; o
         )}
       </section>
 
+      </div>
+      <div className="dp-col">
       {params.contactInfo && (
         <section className="dp-card">
           <h2>¿Dónde donar?</h2>
@@ -193,6 +199,8 @@ export default function DonorPortal({ profile, onLogout }: { profile: Profile; o
           <button className="dp-btn light" onClick={downloadMyData}>Descargar una copia de mis datos</button>
         </div>
       </details>
+      </div>
+      </div>
 
       <p className="dp-footer">HEMOCAX · Banco de Sangre HRDC<br />Tus datos son confidenciales (Ley N.° 29733). DNI {profile.dni}</p>
 
