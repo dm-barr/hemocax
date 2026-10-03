@@ -1,10 +1,12 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, ReactNode, useCallback, useEffect, useState } from 'react';
 import { getBrowserSupabaseClient } from '@/lib/supabase/client';
 import { Params, loadParams } from '@/lib/params';
 import { computeEligibility } from '@/lib/eligibility';
 import { Modal, downloadFile } from './staff/ui';
+import { DropBadge, Icon, IconName } from './donorIcons';
+import './donor.css';
 
 type Profile = { dni: string; full_name: string };
 type Donor = { id: number; first_name: string; last_name: string; gender: 'M' | 'F'; blood_type: string | null; rh_factor: string | null; consent_email: boolean; opted_out: boolean; status: string; email: string | null };
@@ -14,6 +16,10 @@ type Campaign = { id: number; name: string; message_template: string; kind: 'CAM
 
 const RELEASED = ['AVAILABLE', 'NOTIFIED', 'CONSULTED'];
 const longDate = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString('es-PE', { day: 'numeric', month: 'long', year: 'numeric' });
+
+function CardHead({ icon, tone, title }: { icon: IconName; tone: 'green' | 'rose' | 'amber' | 'blue'; title: string }) {
+  return <div className="dp-card-head"><span className={`dp-ico ${tone}`}><Icon name={icon} /></span><h2>{title}</h2></div>;
+}
 
 export default function DonorPortal({ profile, onLogout }: { profile: Profile; onLogout: () => void }) {
   const [donor, setDonor] = useState<Donor | null>(null);
@@ -88,7 +94,7 @@ export default function DonorPortal({ profile, onLogout }: { profile: Profile; o
       <main className="dp">
         <DpTop onLogout={onLogout} />
         <section className="dp-card">
-          <h2>No pudimos cargar tus datos</h2>
+          <CardHead icon="alert" tone="amber" title="No pudimos cargar tus datos" />
           <p>Revisa tu conexión a internet e inténtalo otra vez.</p>
           <button className="dp-btn" onClick={load}>Intentar de nuevo</button>
         </section>
@@ -101,105 +107,110 @@ export default function DonorPortal({ profile, onLogout }: { profile: Profile; o
   const authorized = donor.consent_email && !donor.opted_out;
   const campaignList = campaigns.filter((c) => c.kind === 'CAMPAIGN');
   const infoList = campaigns.filter((c) => c.kind === 'INFO');
+  const blood = donor.blood_type ? `${donor.blood_type}${donor.rh_factor}` : '';
 
-  const hero = {
-    APTO: { tone: 'ok', title: donations.length ? 'Ya puedes volver a donar' : 'Puedes donar sangre', text: 'Acércate al Banco de Sangre. El personal de salud te atenderá y te evaluará ese día.' },
-    ESPERA: { tone: 'wait', title: `Podrás donar desde el ${eligibility.eligibleFrom ? longDate(eligibility.eligibleFrom) : ''}`, text: 'Todavía no pasó el tiempo mínimo desde tu última donación. Gracias por esperar.' },
-    MAXIMO: { tone: 'wait', title: 'Ya donaste todas las veces permitidas este año', text: `Podrás donar de nuevo desde el ${eligibility.eligibleFrom ? longDate(eligibility.eligibleFrom) : ''}.` },
-    INACTIVO: { tone: 'wait', title: 'Tu registro está inactivo', text: 'Habla con el Banco de Sangre si quieres volver a donar.' },
+  const hero: { tone: 'ok' | 'wait'; icon: IconName; title: string; text: string } = {
+    APTO: { tone: 'ok' as const, icon: 'check' as const, title: donations.length ? 'Ya puedes volver a donar' : 'Puedes donar sangre', text: 'Acércate al Banco de Sangre. El personal de salud te atenderá y te evaluará ese día.' },
+    ESPERA: { tone: 'wait' as const, icon: 'clock' as const, title: `Podrás donar desde el ${eligibility.eligibleFrom ? longDate(eligibility.eligibleFrom) : ''}`, text: 'Todavía no pasó el tiempo mínimo desde tu última donación. Gracias por esperar.' },
+    MAXIMO: { tone: 'wait' as const, icon: 'calendar' as const, title: 'Ya donaste todas las veces permitidas este año', text: `Podrás donar de nuevo desde el ${eligibility.eligibleFrom ? longDate(eligibility.eligibleFrom) : ''}.` },
+    INACTIVO: { tone: 'wait' as const, icon: 'alert' as const, title: 'Tu registro está inactivo', text: 'Habla con el Banco de Sangre si quieres volver a donar.' },
   }[eligibility.state];
+
+  const inviteItems: ReactNode = [...campaignList, ...infoList].map((c) => (
+    <div className="dp-item" key={c.id}><b>{c.name}</b><p>{c.message_template.replaceAll('{{nombre}}', donor.first_name)}</p></div>
+  ));
 
   return (
     <main className="dp">
       <DpTop onLogout={onLogout} />
 
       <section className={`dp-hero ${hero.tone}`}>
+        <div className="dp-hero-icon"><Icon name={hero.icon} /></div>
         <div className="dp-hero-text">
-          <p className="dp-hello">Hola, {donor.first_name}</p>
+          <p className="dp-eyebrow">Hola, {donor.first_name}</p>
           <h1>{hero.title}</h1>
           <p>{hero.text}</p>
         </div>
-        <div className="dp-blood"><span>Tu grupo de sangre</span><b>{donor.blood_type ? `${donor.blood_type}${donor.rh_factor}` : 'Aún no registrado'}</b></div>
+        {blood ? <DropBadge label={blood} /> : null}
+        {blood ? <span className="dp-pill"><Icon name="drop" size={20} /> Tu grupo de sangre <b>{blood}</b></span> : null}
       </section>
 
-      {message && <p className="dp-message" role="status">{message}</p>}
+      {message && <p className="dp-message" role="status"><Icon name="check" size={22} /> {message}</p>}
 
       <div className="dp-grid">
-      <div className="dp-col">
-      <section className="dp-card">
-        <h2>Tu resultado</h2>
-        {released.length === 0 ? (
-          <p>Todavía no tienes un resultado nuevo. Cuando el médico lo revise, aparecerá aquí.</p>
-        ) : (
-          <>
-            {released.slice(0, 3).map((r) => (
-              <div className="dp-result" key={r.id}>
-                <b>✓ Tu resultado está listo</b>
-                {r.donations && <span>Donación del {longDate(r.donations.donation_date)}</span>}
-                <p>{r.donor_message || 'Consulta con el Banco de Sangre si tienes dudas.'}</p>
-              </div>
-            ))}
-            {params.recommendations && <div className="dp-reco"><b>Qué hacer ahora</b><p>{params.recommendations}</p></div>}
-          </>
-        )}
-      </section>
+        <div className="dp-col">
+          <section className="dp-card">
+            <CardHead icon="result" tone="green" title="Tu resultado" />
+            {released.length === 0 ? (
+              <p>Todavía no tienes un resultado nuevo. Cuando el médico lo revise, aparecerá aquí.</p>
+            ) : (
+              <>
+                {released.slice(0, 3).map((r) => (
+                  <div className="dp-result" key={r.id}>
+                    <div className="dp-result-title"><Icon name="check" /> Tu resultado está listo</div>
+                    {r.donations && <span>Donación del {longDate(r.donations.donation_date)}</span>}
+                    <p>{r.donor_message || 'Consulta con el Banco de Sangre si tienes dudas.'}</p>
+                  </div>
+                ))}
+                {params.recommendations && <div className="dp-reco"><b>Qué hacer ahora</b><p>{params.recommendations}</p></div>}
+              </>
+            )}
+          </section>
 
-      {(campaignList.length > 0 || infoList.length > 0) && (
-        <section className="dp-card">
-          <h2>{campaignList.length > 0 ? 'El Banco de Sangre te invita' : 'Información útil'}</h2>
-          {[...campaignList, ...infoList].map((c) => (
-            <div className="dp-item" key={c.id}><b>{c.name}</b><p>{c.message_template.replaceAll('{{nombre}}', donor.first_name)}</p></div>
-          ))}
-        </section>
-      )}
+          {(campaignList.length > 0 || infoList.length > 0) && (
+            <section className="dp-card">
+              <CardHead icon="heart" tone="rose" title={campaignList.length > 0 ? 'El Banco de Sangre te invita' : 'Información útil'} />
+              {inviteItems}
+            </section>
+          )}
 
-      <section className="dp-card">
-        <h2>Tus donaciones</h2>
-        <p>{donations.length === 0 ? 'Todavía no tienes donaciones registradas.' : <>Has donado <b>{donations.length} {donations.length === 1 ? 'vez' : 'veces'}</b>. La última fue el <b>{longDate(donations[0].donation_date)}</b>.</>}</p>
-        <p className="dp-small">Este año llevas {eligibility.thisYear} de {eligibility.limit} donaciones permitidas.</p>
-        {donations.length > 1 && (
-          <details className="dp-more"><summary>Ver todas mis donaciones</summary>
-            <ul>{donations.map((d) => <li key={d.id}>{longDate(d.donation_date)}</li>)}</ul>
-          </details>
-        )}
-      </section>
-
-      </div>
-      <div className="dp-col">
-      {params.contactInfo && (
-        <section className="dp-card">
-          <h2>¿Dónde donar?</h2>
-          <p className="dp-pre">{params.contactInfo}</p>
-        </section>
-      )}
-
-      <section className="dp-card">
-        <h2>Avisos por correo</h2>
-        {!donor.email ? (
-          <p>Para recibir avisos necesitamos tu correo electrónico. Pídele al personal del Banco de Sangre que lo anote.</p>
-        ) : authorized ? (
-          <>
-            <p>✓ <b>Estás recibiendo avisos</b> en {donor.email}: recordatorios, resultados y campañas.</p>
-            <button className="dp-btn light" onClick={() => setConsent(false)}>Dejar de recibir avisos</button>
-          </>
-        ) : (
-          <>
-            <p>Ahora <b>no estás recibiendo avisos</b>. Si quieres, te avisaremos cuando puedas volver a donar y cuando tu resultado esté listo.</p>
-            <button className="dp-btn" onClick={() => setAskConsent(true)}>Quiero recibir avisos</button>
-          </>
-        )}
-      </section>
-
-      <details className="dp-card dp-options">
-        <summary>Más opciones</summary>
-        <PasswordForm onDone={setMessage} />
-        <div className="dp-opt">
-          <h3>Mis datos personales</h3>
-          <p>Tienes derecho a conocer, corregir y pedir que se eliminen tus datos. Para corregirlos o eliminarlos, pídelo en el Banco de Sangre.</p>
-          <button className="dp-btn light" onClick={downloadMyData}>Descargar una copia de mis datos</button>
+          <section className="dp-card">
+            <CardHead icon="calendar" tone="blue" title="Tus donaciones" />
+            <p>{donations.length === 0 ? 'Todavía no tienes donaciones registradas.' : <>Has donado <b>{donations.length} {donations.length === 1 ? 'vez' : 'veces'}</b>. La última fue el <b>{longDate(donations[0].donation_date)}</b>.</>}</p>
+            <p className="dp-small">Este año llevas {eligibility.thisYear} de {eligibility.limit} donaciones permitidas.</p>
+            {donations.length > 1 && (
+              <details className="dp-more"><summary>Ver todas mis donaciones</summary>
+                <ul>{donations.map((d) => <li key={d.id}>{longDate(d.donation_date)}</li>)}</ul>
+              </details>
+            )}
+          </section>
         </div>
-      </details>
-      </div>
+
+        <div className="dp-col">
+          {params.contactInfo && (
+            <section className="dp-card">
+              <CardHead icon="pin" tone="blue" title="¿Dónde donar?" />
+              <p className="dp-pre">{params.contactInfo}</p>
+            </section>
+          )}
+
+          <section className="dp-card">
+            <CardHead icon="bell" tone="amber" title="Avisos por correo" />
+            {!donor.email ? (
+              <p>Para recibir avisos necesitamos tu correo electrónico. Pídele al personal del Banco de Sangre que lo anote.</p>
+            ) : authorized ? (
+              <>
+                <p><b>Estás recibiendo avisos</b> en {donor.email}: recordatorios, resultados y campañas.</p>
+                <button className="dp-btn light" onClick={() => setConsent(false)}>Dejar de recibir avisos</button>
+              </>
+            ) : (
+              <>
+                <p>Ahora <b>no estás recibiendo avisos</b>. Si quieres, te avisaremos cuando puedas volver a donar y cuando tu resultado esté listo.</p>
+                <button className="dp-btn" onClick={() => setAskConsent(true)}>Quiero recibir avisos</button>
+              </>
+            )}
+          </section>
+
+          <details className="dp-card dp-options">
+            <summary>Más opciones</summary>
+            <PasswordForm onDone={setMessage} />
+            <div className="dp-opt">
+              <h3>Mis datos personales</h3>
+              <p>Tienes derecho a conocer, corregir y pedir que se eliminen tus datos. Para corregirlos o eliminarlos, pídelo en el Banco de Sangre.</p>
+              <button className="dp-btn light" onClick={downloadMyData}>Descargar una copia de mis datos</button>
+            </div>
+          </details>
+        </div>
       </div>
 
       <p className="dp-footer">HEMOCAX · Banco de Sangre HRDC<br />Tus datos son confidenciales (Ley N.° 29733). DNI {profile.dni}</p>
