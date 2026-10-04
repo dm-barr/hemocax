@@ -1,0 +1,8 @@
+﻿dni;nombres;apellidos;sexo;fecha_nacimiento;telefono;correo;grupo_sanguineo
+99000201;Sofía;Castillo Demo;F;12/05/1996;987000201;hemocax26+sofia@gmail.com;O+
+99000202;Miguel;Huamán Demo;M;03/11/1990;987000202;;A+
+99000203;Andrea;Chávez Demo;F;21/01/2001;987000203;hemocax26+andrea@gmail.com;No sé
+99000204;Raúl;Tello Demo;M;30/07/1984;987000204;;B-
+99000205;Camila;Ruiz Demo;F;09/09/1998;987000205;;AB+
+9900206;Error;DniCorto Demo;M;01/01/1990;987000206;;O+
+99000207;Fila;SinSexo Demo;;01/01/1990;987000207;;O+
