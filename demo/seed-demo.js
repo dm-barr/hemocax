@@ -40,6 +40,28 @@ const DONORS = [
   { dni: '99000012', first: 'Juan', last: 'Ramos Demo', g: 'M', blood: 'A+', birth: '1986-10-10', email: MAIL('juan'), consent: true, account: 'demo-luna-mar-12', donations: [[daysAgo(15), { h: 27, msg: 'Tus resultados están normales. Gracias por donar.' }]] },
 ];
 
+// 18 donantes adicionales: junto con los 12 anteriores suman 30 donantes DEMO.
+// 15 tienen 1 donación (con las 15 anteriores suman 30 donaciones y 30 resultados) y 3 son registros nuevos sin donar.
+// Ninguno es O negativo con consentimiento, para que la campaña «O negativo» siga llegando solo a los donantes del guion.
+const EXTRA = [
+  ['Marco', 'Chávez', 'M', 'A+', '1984-01-19', 'marco', true, 260], ['Sofía', 'Alva', 'F', 'O+', '1996-02-11', 'sofia', true, 240],
+  ['Raúl', 'Tello', 'M', 'B+', '1979-09-23', 'raul', true, 220], ['Camila', 'Huamán', 'F', 'A-', '1998-04-30', 'camila', true, 200],
+  ['Daniel', 'Zelada', 'M', 'O+', '1991-12-12', 'daniel', true, 180], ['Valeria', 'Cieza', 'F', 'AB+', '1993-06-06', 'valeria', true, 165],
+  ['Hugo', 'Sánchez', 'M', 'A+', '1987-03-27', 'hugo', true, 150], ['Paola', 'Becerra', 'F', 'B-', '1990-10-15', 'paola', true, 135],
+  ['Iván', 'Calderón', 'M', 'O+', '1982-08-04', 'ivan', true, 120], ['Lorena', 'Ríos', 'F', 'A+', '1994-05-21', 'lorena', true, 105],
+  ['Sergio', 'Vásquez', 'M', 'B+', '2000-07-09', 'sergio', true, 90], ['Natalia', 'Llamo', 'F', 'O+', '1989-11-02', 'natalia', true, 75],
+  ['Óscar', 'Mejía', 'M', 'AB-', '1976-02-28', null, false, 60], ['Gabriela', 'Terrones', 'F', 'A+', '1995-09-17', null, false, 45],
+  ['Andrés', 'Cabrera', 'M', 'B+', '1992-12-25', null, false, 30],
+  ['Fiorella', 'Paredes', 'F', null, '1999-01-08', 'fiorella', true, null], ['Kevin', 'Sarmiento', 'M', null, '2001-03-14', null, false, null],
+  ['Milagros', 'Ordóñez', 'F', 'O+', '1988-06-29', 'milagros', true, null],
+];
+EXTRA.forEach(([first, last, g, blood, birth, tag, consent, ago], i) => {
+  DONORS.push({
+    dni: String(99000111 + i), first, last: `${last} Demo`, g, blood, birth, email: tag ? MAIL(tag) : null, consent: !!(consent && tag), extra: true,
+    donations: ago ? [[daysAgo(ago), { h: 20 + ((i * 7) % 30) }]] : [],
+  });
+});
+
 async function mkUser(dni, name, role, release, password) {
   const { data, error } = await s.auth.admin.createUser({ email: `dni-${dni}@login.hemocax.org`, password, email_confirm: true, user_metadata: { dni, full_name: name } });
   if (error) throw new Error(`${dni}: ${error.message}`);
@@ -114,12 +136,36 @@ async function main() {
   await comm('99000107', 'BIRTHDAY', 'SENT', 'Sistema (automático)', 30, { message: 'Feliz cumpleaños, Marta.' });
   await comm('99000101', 'RETURN_REMINDER', 'FAILED', 'Sistema (automático)', 3, { message: 'Hola Ana. Ya puedes volver a donar.', fields: { related_donation_id: ids['99000101'].donations[0], error_message: 'Ejemplo: la bandeja del destinatario está llena' } });
 
+  // Historial adicional para completar 30 correos de ejemplo (solo registros: no se envía nada)
+  const conCorreo = DONORS.filter((d) => d.extra && d.consent && d.donations.length);
+  for (const d of conCorreo) {
+    await comm(d.dni, 'DONATION_THANKS', 'SENT', 'Sistema (automático)', 5 + Math.floor(Math.random() * 40), { message: `Hola ${d.first}. Gracias por tu donación voluntaria.`, fields: { related_donation_id: ids[d.dni].donations[0] } });
+  }
+  for (const d of conCorreo.slice(0, 4)) await comm(d.dni, 'BIRTHDAY', 'SENT', 'Sistema (automático)', 20 + Math.floor(Math.random() * 60), { message: `Feliz cumpleaños, ${d.first}.` });
+  const manuales = conCorreo.slice(4, 11);
+  for (const [i, d] of manuales.entries()) {
+    await comm(d.dni, 'MANUAL', i === 2 || i === 5 ? 'FAILED' : 'SENT', i % 2 ? 'Médico Demo' : 'Enfermera Demo', 2 + i * 4,
+      { message: `Hola ${d.first}, gracias por ser parte de HEMOCAX.`, fields: i === 2 || i === 5 ? { error_message: 'Ejemplo: el buzón del destinatario no existe' } : {} });
+  }
+  const totales = {};
+  for (const [tabla, filtro] of [['donors', ['dni', '9900%']]]) {
+    const r = await s.from(tabla).select('id', { count: 'exact', head: true }).like(filtro[0], filtro[1]);
+    totales[tabla] = r.count;
+  }
+  const ds = (await s.from('donors').select('id').like('dni', '9900%')).data.map((x) => x.id);
+  totales.donaciones = (await s.from('donations').select('id', { count: 'exact', head: true }).in('donor_id', ds)).count;
+  totales.correos = (await s.from('communications').select('id', { count: 'exact', head: true }).in('donor_id', ds)).count;
+  console.log('Totales DEMO:', JSON.stringify(totales));
+
   let credentials = 'CUENTAS DE DEMOSTRACIÓN (portal: https://hemocax.vercel.app)\r\n\r\nPERSONAL\r\n';
   for (const a of ACCOUNTS) credentials += `  ${a.name.padEnd(20)} DNI ${a.dni}   contraseña: ${a.password}\r\n`;
   credentials += '\r\nDONANTES CON CUENTA\r\n';
   for (const d of DONORS.filter((x) => x.account)) credentials += `  ${(d.first + ' ' + d.last).padEnd(20)} DNI ${d.dni}   contraseña: ${d.account}\r\n`;
   credentials += '\r\nDONANTES PARA ATENDER (busca por DNI o escribe «Demo» en Donantes)\r\n';
-  for (const d of DONORS.filter((x) => !x.account)) credentials += `  ${(d.first + ' ' + d.last).padEnd(20)} DNI ${d.dni}\r\n`;
+  for (const d of DONORS.filter((x) => !x.account && !x.extra)) credentials += `  ${(d.first + ' ' + d.last).padEnd(20)} DNI ${d.dni}\r\n`;
+  credentials += `
+(+ ${DONORS.filter((x) => x.extra).length} donantes adicionales DNI 99000111 a 99000128, para que el listado tenga 30)
+`;
   fs.writeFileSync(path.join(__dirname, 'CREDENCIALES_DEMO.txt'), credentials);
   console.log(credentials);
 }
