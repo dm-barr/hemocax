@@ -91,7 +91,11 @@ def main():
                  + cuerpo + "\n</body></html>\n")
     with open("HEMOCAX_Pitch.html", "w", encoding="utf-8") as f:
         f.write(envoltura)
-    print("HEMOCAX_Pitch.html", round(len(envoltura) / 1024), "KB")
+    # copia servida por Vercel en /pitch (ver rewrites en next.config.ts)
+    destino = os.path.join(AQUI, "..", "..", "public", "pitch.html")
+    with open(destino, "w", encoding="utf-8") as f:
+        f.write(envoltura)
+    print("HEMOCAX_Pitch.html", round(len(envoltura) / 1024), "KB  ->  public/pitch.html")
 
 
 if __name__ == "__main__":
