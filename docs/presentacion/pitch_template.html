@@ -107,15 +107,12 @@ svg text{font-family:var(--fb)}
 .step.on i{background:var(--rose);color:#fff}
 .step b{font-size:calc(var(--u)*1.15);line-height:1.2}
 /* video */
-.vid{position:relative;aspect-ratio:16/9;background:#05080d;border-radius:calc(var(--u)*1.2);overflow:hidden;display:grid;place-items:center;min-height:0;max-height:100%}
-.vid video{width:100%;height:100%;object-fit:contain;background:#000}
-.drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.9);padding:calc(var(--u)*2);text-align:center;color:#e9eef5;border:2px dashed #ffffff55;border-radius:calc(var(--u)*1.2)}
-.drop.over{border-color:var(--rose);background:#d94e6822}
+.vidbox{flex:1;min-height:0;display:flex;justify-content:center}
+.vid{position:relative;height:100%;max-width:100%;aspect-ratio:16/9;background:#05080d;border-radius:calc(var(--u)*1.2);overflow:hidden}
+.vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.9);padding:calc(var(--u)*2);text-align:center;color:#e9eef5}
 .drop .play{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:50%;background:var(--rose);display:grid;place-items:center}
 .drop .play svg{width:40%;height:40%;fill:#fff;margin-left:6%}
-.drop .btn{background:#fff;color:#14202e;border-color:#fff;text-align:center}
-.link{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.link input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--stage);color:var(--ink);border-radius:calc(var(--u)*.7);padding:calc(var(--u)*.6) calc(var(--u)*.9);font:inherit;font-size:calc(var(--u)*1.05)}
 /* portal mock */
 .phone{border:2px solid var(--line);border-radius:calc(var(--u)*2);background:var(--stage);padding:calc(var(--u)*1.1);display:flex;flex-direction:column;gap:calc(var(--u)*.8);min-width:0;box-shadow:var(--shadow)}
 .hero{display:flex;gap:calc(var(--u)*1);align-items:center;border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.2)}
@@ -151,6 +148,8 @@ svg text{font-family:var(--fb)}
 .plane .q{position:absolute;width:50%;height:50%;display:flex;padding:calc(var(--u)*.6);font-size:calc(var(--u)*.9);font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .plane .dotb{position:absolute;transform:translate(-50%,50%);width:calc(var(--u)*2.5);height:calc(var(--u)*2.5);border-radius:50%;border:2px solid var(--stage);font-size:calc(var(--u)*.85);font-weight:800;color:#fff;padding:0;display:grid;place-items:center}
 .dotb.apoya{background:var(--ok)}.dotb.neutral{background:var(--warn)}.dotb.resist{background:var(--bad)}
+.dotb.cuello{box-shadow:0 0 0 4px var(--bad-soft),0 0 0 6px var(--bad)}
+.cuello-l{position:absolute;right:calc(var(--u)*.6);margin-top:calc(var(--u)*1.7);font-size:calc(var(--u)*.95);font-weight:800;color:var(--bad);white-space:nowrap}
 .dotb.dim{opacity:.18}.dotb.sel{outline:3px solid var(--ink);z-index:3}
 .ax{position:absolute;font-size:calc(var(--u)*.9);color:var(--muted);font-weight:700}
 /* riesgos */
@@ -279,27 +278,12 @@ input[type=range]{width:100%;accent-color:var(--navy)}
 <section class="slide" data-sec="p" data-title="El sistema en acción">
   <p class="eyebrow">Demostración</p>
   <h2 class="h" style="font-size:calc(var(--u)*2.8)">El sistema en acción</h2>
-  <div class="row fill">
-    <div class="col" style="flex:2.3">
-      <div class="vid" id="vid">
-        <video id="demoVideo" controls playsinline preload="metadata" hidden></video>
-        <div class="drop" id="dropz">
-          <div class="play"><svg viewBox="0 0 24 24"><path d="M5 3l15 9-15 9z"/></svg></div>
-          <b style="font-size:calc(var(--u)*1.6)">Video de la simulación del software</b>
-          <span style="font-size:calc(var(--u)*1.05);opacity:.8">Arrastra el archivo aquí o elígelo desde tu computadora. Se reproduce sin internet.</span>
-          <label class="btn" for="videoFile">Elegir video</label>
-          <input id="videoFile" type="file" accept="video/*" hidden>
-        </div>
+  <div class="vidbox">
+    <div class="vid" id="vid">
+      <div class="drop" id="dropz">
+        <div class="play"><svg viewBox="0 0 24 24"><path d="M5 3l15 9-15 9z"/></svg></div>
+        <b style="font-size:calc(var(--u)*1.6)">Video de la simulación del software</b>
       </div>
-      <div class="link"><input id="vidLink" type="url" placeholder="O pega aquí el enlace del video (YouTube, Drive)" aria-label="Enlace del video"><a class="btn" id="vidOpen" href="#" target="_blank" rel="noopener" hidden>Abrir en otra pestaña</a></div>
-    </div>
-    <div class="col" style="flex:1">
-      <p class="b t">Lo que se ve en el video</p>
-      <ol class="l" style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:calc(var(--u)*.5);font-size:calc(var(--u)*1.15)">
-        <li>Ingreso con DNI y contraseña</li><li>Enfermería busca al donante y registra la donación</li><li>El médico libera un resultado y marca otro como crítico</li>
-        <li>El correo llega al donante</li><li>El donante ve su estado en el celular</li><li>Campañas, reportes y cuentas del administrador</li>
-      </ol>
-      <div class="card blue s">Con el archivo <b>demo.mp4</b> junto a esta presentación, el video se carga solo.</div>
     </div>
   </div>
 </section>
@@ -499,7 +483,7 @@ input[type=range]{width:100%;accent-color:var(--navy)}
     </div>
     <div class="col" style="flex:1">
       <div class="card fill" id="stBox"></div>
-      <p class="s">Cada punto es un interesado. El color es su actitud (el tercer eje del cubo). Toca uno para ver por qué tiene ese nivel de poder y de interés.</p>
+      <p class="s">Cada punto es un interesado. El color es su actitud (el tercer eje del cubo); el aro rojo marca el cuello de botella. Toca uno para ver por qué tiene ese nivel de poder y de interés.</p>
     </div>
   </div>
 </section>
@@ -830,12 +814,13 @@ function buildStake() {
       q('', 'Monitorear', 'left:0;bottom:0;align-items:flex-end') + q('', 'Mantener informado', 'right:0;bottom:0;justify-content:flex-end;align-items:flex-end;text-align:right');
     h += '<div style="position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--line)"></div><div style="position:absolute;top:0;bottom:0;left:50%;border-left:1px dashed var(--line)"></div>';
     h += dots.map((d) => { const cl = d.s.actitud === 'Apoya' ? 'apoya' : d.s.actitud === 'Neutral' ? 'neutral' : 'resist'; const dim = capa !== 'all' && d.s.actitud !== capa;
-      return `<button class="dotb ${cl} ${dim ? 'dim' : ''} ${d.s.id === sel ? 'sel' : ''}" data-s="${d.s.id}" style="left:${d.x}%;bottom:${d.y}%" aria-label="${esc(d.s.nombre)}">${d.s.id.slice(1)}</button>`; }).join('');
+      return `<button class="dotb ${cl} ${dim ? 'dim' : ''} ${d.s.id === sel ? 'sel' : ''} ${d.s.cuello ? 'cuello' : ''}" data-s="${d.s.id}" style="left:${d.x}%;bottom:${d.y}%" aria-label="${esc(d.s.nombre)}">${d.s.id.slice(1)}</button>`; }).join('');
+    h += dots.filter((d) => d.s.cuello).map((d) => `<span class="cuello-l ${capa !== 'all' && capa !== d.s.actitud ? 'dim' : ''}" style="top:${100 - d.y}%">Cuello de botella</span>`).join('');
     h += '<span class="ax" style="left:50%;bottom:2px;transform:translateX(-50%)">Interés →</span><span class="ax" style="left:2px;top:50%;transform:translateY(-50%) rotate(-90deg);transform-origin:center;writing-mode:horizontal-tb">Poder →</span>';
     $('#plane').innerHTML = h;
     const s = D.interesados.find((x) => x.id === sel);
-    $('#stBox').innerHTML = `<p class="s b" style="color:var(--navy)">${s.id} · ${esc(s.actitud)} · ${esc(s.estrategia)}</p><p class="t b" style="font-size:calc(var(--u)*1.6)">${esc(s.nombre)}</p><p class="s">${esc(s.rol)} · ${esc(s.org)}</p>
-      <p class="t"><b>Poder ${s.poder}/5.</b> ${esc(s.pq_poder)}</p><p class="t"><b>Interés ${s.interes}/5.</b> ${esc(s.pq_interes)}</p><p class="s"><b>Espera:</b> ${esc(s.exp)}</p>`;
+    $('#stBox').innerHTML = `<p class="s b" style="color:var(--navy)">${s.id} · ${esc(s.actitud)} · ${esc(s.estrategia)}</p><p class="t b" style="font-size:calc(var(--u)*1.6)">${esc(s.nombre)} ${s.cuello ? '<span class="sig bad">Cuello de botella</span>' : ''}</p><p class="s">${esc(s.rol)} · ${esc(s.org)}</p>
+      <p class="t"><b>Poder ${s.poder}/5.</b> ${esc(s.pq_poder)}</p><p class="t"><b>Interés ${s.interes}/5.</b> ${esc(s.pq_interes)}</p><p class="s"><b>Espera:</b> ${esc(s.exp)}</p>${s.cuello ? `<p class="t" style="color:var(--bad)"><b>Por qué frena el proyecto.</b> ${esc(s.pq_cuello)}</p>` : ''}`;
   };
   $('#plane').onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) { sel = b.dataset.s; draw(); } };
   $$('[data-a]', slides[15]).forEach((b) => b.addEventListener('click', () => { capa = b.dataset.a; $$('[data-a]', slides[15]).forEach((c) => c.classList.toggle('on', c === b)); draw(); }));
@@ -863,20 +848,14 @@ function buildTeam() {
   $('#raci').innerHTML = head + '<tbody>' + D.raci.map((r) => `<tr><td>${esc(r.n)}</td>${D.cols.map((c) => `<td><b style="color:${r[c].includes('A') ? 'var(--rose)' : r[c].includes('R') ? 'var(--navy)' : 'var(--muted)'}">${r[c]}</b></td>`).join('')}</tr>`).join('') + '</tbody>';
 }
 
-/* ---------- video ---------- */
+/* ---------- video ----------
+   Pega aquí el enlace de YouTube cuando esté listo (watch?v=…, youtu.be/… o /embed/…). */
+const VIDEO_URL = '';
 (function video() {
-  const v = $('#demoVideo'), dz = $('#dropz'), inp = $('#videoFile'), lnk = $('#vidLink'), open = $('#vidOpen');
-  const load = (src) => { v.src = src; v.hidden = false; dz.hidden = true; };
-  v.addEventListener('error', () => { if (v.src && v.src.indexOf('blob:') !== 0) { v.hidden = true; dz.hidden = false; } });
-  v.addEventListener('loadeddata', () => { if (v.src) { v.hidden = false; dz.hidden = true; } });
-  v.src = 'demo.mp4';
-  inp.addEventListener('change', () => { if (inp.files[0]) load(URL.createObjectURL(inp.files[0])); });
-  ['dragenter', 'dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('over'); }));
-  ['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('over'); }));
-  dz.addEventListener('drop', (e) => { const f = e.dataTransfer.files[0]; if (f && f.type.indexOf('video') === 0) load(URL.createObjectURL(f)); });
-  const setLink = (u) => { if (/^https?:\/\//i.test(u)) { open.href = u; open.hidden = false; store.set('hx-vid', u); } else open.hidden = true; };
-  lnk.addEventListener('input', () => setLink(lnk.value.trim()));
-  const saved = store.get('hx-vid'); if (saved) { lnk.value = saved; setLink(saved); }
+  const m = VIDEO_URL.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+  if (!m) return;
+  $('#dropz').hidden = true;
+  $('#vid').insertAdjacentHTML('beforeend', `<iframe src="https://www.youtube-nocookie.com/embed/${m[1]}?rel=0" title="Video de la simulación del software" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`);
 })();
 
 buildNav(); build();

@@ -63,6 +63,14 @@ def construir_datos():
     inter = []
     for (sid, nom, org, rol, exp, i, infl, act, fase, est) in D.INTERESADOS:
         inter.append(dict(id=sid, nombre=nom, org=org, rol=rol, exp=exp, interes=i, poder=infl, actitud=act, estrategia=est, pq_poder=POR_QUE[sid][0], pq_interes=POR_QUE[sid][1]))
+    # En la presentación la Dra. Marimar se muestra como resistencia y cuello de botella
+    # (el informe de gestión y datos.py no se modifican).
+    for i in inter:
+        if i["id"] == "S08":
+            i["actitud"] = "Resistencia"
+            i["cuello"] = True
+            i["pq_cuello"] = ("Nada pasa al uso real sin su validación: el flujo diario, los textos del portal y la adopción del personal dependen de ella, "
+                              "y hoy sigue pendiente. Plan: demostraciones cortas en su servicio, cambios que ella pida en la misma semana y cierre de cada hito con su visto bueno.")
     A = D.ACT
     hitos = [("H1", "Project Charter aprobado", A["1.1"]["fin"]), ("H3", "Requisitos y alcance aprobados", A["2.2"]["fin"]), ("H5", "Arquitectura y datos aprobados", A["2.7"]["fin"]),
              ("H7", "Núcleo operativo listo", A["3.5"]["fin"]), ("H9", "Sistema en producción", A["3.11"]["fin"]), ("H12", "Acta de cierre", A["5.3"]["fin"])]
