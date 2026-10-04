@@ -114,6 +114,8 @@ Estos permisos no se aplican solo en la pantalla: están **escritos en la base d
 
 ## 5. Guía de orientación: dónde está cada cosa
 
+> 📋 **¿Buscas los procesos de negocio?** El mapa de los 15 procesos de la aplicación (diagramas con carriles por actor, procesos × roles, procesos × datos y dependencias) está en [`docs/PROCESOS.md`](docs/PROCESOS.md).
+
 ### 5.1 Por tarea
 
 | Quiero… | Mira en… |
@@ -130,6 +132,7 @@ Estos permisos no se aplican solo en la pantalla: están **escritos en la base d
 | Importar donantes desde Excel | `lib/csv.ts`, `app/staff/ImportDonors.tsx` |
 | Cambiar los indicadores de Reportes | `app/staff/ReportsTab.tsx` |
 | Cambiar hora de los recordatorios | `automations/worker.py` (`SCHEDULE`) |
+| Ver qué procesos tiene la aplicación y quién participa | [`docs/PROCESOS.md`](docs/PROCESOS.md) |
 | Generar datos de demostración | `demo/seed-demo.js` → [sección 21](#21-demostración-y-video) |
 
 ### 5.2 Mapa del repositorio
