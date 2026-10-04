@@ -173,6 +173,7 @@ HEMOCAX/
 │  └─ Dockerfile
 ├─ supabase/migrations/           Esquema, RLS, triggers y funciones (en orden)
 ├─ demo/                          Datos de demostración, guion de video y limpieza
+├─ docs/                          PROCESOS.md (mapa de procesos) y gestion-proyectos/ (informe del curso en Word + generador)
 ├─ .env.example                   Plantilla de variables de entorno
 └─ (histórico, no usar en producción)  server.js, public/, data/, n8n/, db/, docker-compose.yml
 ```
