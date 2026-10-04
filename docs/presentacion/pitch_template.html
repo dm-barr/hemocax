@@ -1,0 +1,930 @@
+<title>Pitch HEMOCAX</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Concepto: un escenario 16:9 que escala con su ancho (cqw). Rojo HEMOCAX para lo humano, azul marino para la gestión. */
+:root{
+  --bg:#eef1f5; --stage:#ffffff; --panel:#f6f8fb; --ink:#14202e; --muted:#566377; --line:#d9e0e8;
+  --rose:#d94e68; --rose-soft:#fbe8ec; --navy:#1f4e79; --navy-soft:#e5eef8; --ok:#23825a; --ok-soft:#e1f3ea; --warn:#b9770e; --warn-soft:#fbf0d9; --bad:#c0392b; --bad-soft:#fbe3df;
+  --shadow:0 1px 2px #14202e14,0 18px 50px #14202e18;
+  --fd:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif; --fb:'DM Sans','Segoe UI',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#080d14; --stage:#111a26; --panel:#172233; --ink:#e9eef5; --muted:#96a5b8; --line:#26354a;
+  --rose:#f0708a; --rose-soft:#3b1d28; --navy:#86b8ea; --navy-soft:#16293f; --ok:#4cc58b; --ok-soft:#133126; --warn:#e2a93a; --warn-soft:#3a2d12; --bad:#ee7466; --bad-soft:#3b1f1b;
+  --shadow:0 1px 2px #0008,0 18px 50px #0009; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#080d14; --stage:#111a26; --panel:#172233; --ink:#e9eef5; --muted:#96a5b8; --line:#26354a;
+  --rose:#f0708a; --rose-soft:#3b1d28; --navy:#86b8ea; --navy-soft:#16293f; --ok:#4cc58b; --ok-soft:#133126; --warn:#e2a93a; --warn-soft:#3a2d12; --bad:#ee7466; --bad-soft:#3b1f1b;
+  --shadow:0 1px 2px #0008,0 18px 50px #0009; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--fb);margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
+.shell{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;gap:12px;padding-inline:16px;padding-block:12px}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font:800 20px/1 var(--fd);letter-spacing:-.4px}
+.brand svg{width:20px;height:25px;fill:var(--rose)}
+.brand b{color:var(--rose)}
+.secs{display:flex;gap:6px;flex-wrap:wrap}
+.sec{border:1px solid var(--line);background:var(--stage);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;color:var(--muted)}
+.sec.on{background:var(--ink);color:var(--stage);border-color:var(--ink)}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.tool{border:1px solid var(--line);background:var(--stage);border-radius:10px;padding:7px 12px;font-size:14px;font-weight:700}
+.tool:hover{border-color:var(--rose)}
+.stagewrap{flex:1;display:flex;justify-content:center;align-items:flex-start;min-height:0}
+.stage{--u:1cqw;container-type:size;aspect-ratio:16/9;width:min(100%,calc((100vh - 150px)*16/9));width:min(100%,calc((100dvh - 150px)*16/9));position:relative;background:var(--stage);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--line)}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;gap:calc(var(--u)*1.4);padding:calc(var(--u)*2.8) calc(var(--u)*3.6) calc(var(--u)*2.4);overflow:hidden}
+.slide.on{display:flex;animation:in .38s ease both}
+@keyframes in{from{opacity:0;transform:translateX(calc(var(--u)*1.2))}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.slide.on{animation:none}}
+.eyebrow{font-size:calc(var(--u)*1.05);letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--rose);margin:0}
+.gestion .eyebrow{color:var(--navy)}
+.h{font-family:var(--fd);font-weight:800;font-size:calc(var(--u)*3.5);line-height:1.08;letter-spacing:-.025em;margin:0;text-wrap:balance}
+.lead{font-size:calc(var(--u)*1.5);line-height:1.45;color:var(--muted);margin:0;max-width:62ch}
+.t{font-size:calc(var(--u)*1.35);line-height:1.42;margin:0}
+.s{font-size:calc(var(--u)*1.1);line-height:1.4;color:var(--muted);margin:0}
+.b{font-weight:700}
+.row{display:flex;gap:calc(var(--u)*1.6);min-height:0;min-width:0}
+.col{display:flex;flex-direction:column;gap:calc(var(--u)*1.1);min-height:0;min-width:0}
+.fill{flex:1}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.6);min-height:0}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.4);min-height:0}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1.2);min-height:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:calc(var(--u)*1);padding:calc(var(--u)*1.3);min-width:0}
+.card.red{background:var(--rose-soft);border-color:transparent}
+.card.blue{background:var(--navy-soft);border-color:transparent}
+.card.green{background:var(--ok-soft);border-color:transparent}
+.card.amber{background:var(--warn-soft);border-color:transparent}
+.kpi{display:flex;flex-direction:column;gap:2px}
+.kpi b{font:800 calc(var(--u)*2.8)/1 var(--fd);letter-spacing:-.03em}
+.kpi span{font-size:calc(var(--u)*1.05);color:var(--muted);font-weight:500}
+.chip{display:inline-flex;align-items:center;border-radius:999px;border:1px solid var(--line);background:var(--stage);padding:calc(var(--u)*.3) calc(var(--u)*.9);font-size:calc(var(--u)*1.05);font-weight:700}
+.chip.on{background:var(--ink);color:var(--stage);border-color:var(--ink)}
+.chip.rose{background:var(--rose);color:#fff;border-color:var(--rose)}
+.btn{border:1.5px solid var(--line);background:var(--stage);border-radius:calc(var(--u)*.8);padding:calc(var(--u)*.7) calc(var(--u)*1.1);font-size:calc(var(--u)*1.15);font-weight:700;text-align:left}
+.btn:hover{border-color:var(--rose)}
+.btn.on{border-color:var(--rose);background:var(--rose-soft)}
+.gestion .btn:hover{border-color:var(--navy)}
+.gestion .btn.on{border-color:var(--navy);background:var(--navy-soft)}
+.tag{position:absolute;right:calc(var(--u)*2.2);bottom:calc(var(--u)*1.2);font-size:calc(var(--u)*.95);color:var(--muted)}
+.bar{display:flex;align-items:center;gap:10px;justify-content:center}
+.nav{border:1px solid var(--line);background:var(--stage);border-radius:12px;width:46px;height:46px;font-size:20px;font-weight:700}
+.nav:hover{border-color:var(--rose)}
+.nav:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:70ch}
+.dot{width:12px;height:12px;border-radius:50%;border:0;padding:0;background:var(--line)}
+.dot.on{background:var(--rose);transform:scale(1.25)}
+.dot.g{background:color-mix(in srgb,var(--navy) 35%,var(--line))}
+.dot.g.on{background:var(--navy)}
+.count{font-weight:700;font-size:14px;color:var(--muted);min-width:60px;text-align:center;font-variant-numeric:tabular-nums}
+details.dt{border:1px solid var(--line);border-radius:calc(var(--u)*.9);background:var(--stage)}
+details.dt>summary{list-style:none;cursor:pointer;padding:calc(var(--u)*.75) calc(var(--u)*1.1);font-weight:700;font-size:calc(var(--u)*1.15);display:flex;justify-content:space-between;gap:10px}
+details.dt>summary::-webkit-details-marker{display:none}
+details.dt>summary::after{content:'+';font-size:calc(var(--u)*1.6);line-height:1;color:var(--rose)}
+.gestion details.dt>summary::after{color:var(--navy)}
+details.dt[open]>summary::after{content:'−'}
+details.dt .in{padding:0 calc(var(--u)*1.1) calc(var(--u)*1)}
+.scroll{overflow:auto;min-height:0;max-width:100%}
+table.tb{border-collapse:collapse;width:100%;font-size:calc(var(--u)*1)}
+table.tb th,table.tb td{border-bottom:1px solid var(--line);padding:calc(var(--u)*.4) calc(var(--u)*.6);text-align:left;vertical-align:top}
+table.tb th{font-size:calc(var(--u)*.9);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);position:sticky;top:0;background:var(--stage)}
+.num{font-variant-numeric:tabular-nums}
+ul.l{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:calc(var(--u)*.45);font-size:calc(var(--u)*1.25);line-height:1.38}
+ul.l.s{font-size:calc(var(--u)*1.05)}
+.quote{border-left:4px solid var(--rose);padding:calc(var(--u)*.3) calc(var(--u)*1.2);font-size:calc(var(--u)*1.35);font-style:italic;color:var(--muted)}
+svg text{font-family:var(--fb)}
+/* portada */
+.cover{justify-content:center;background:radial-gradient(120% 90% at 85% 10%,var(--rose-soft),transparent 60%)}
+.cover .mark{width:calc(var(--u)*5);height:calc(var(--u)*6.2);fill:var(--rose)}
+.cover .big{font-family:var(--fd);font-weight:800;font-size:calc(var(--u)*9.5);letter-spacing:-.05em;line-height:.9;margin:0}
+.cover .big b{color:var(--rose)}
+.cover .tagline{font-family:var(--fd);font-weight:700;font-size:calc(var(--u)*2.8);line-height:1.1;margin:0;max-width:20ch;text-wrap:balance}
+/* ciclo */
+.cycle{display:grid;grid-template-columns:repeat(6,1fr);gap:calc(var(--u)*.8);align-items:stretch}
+.step{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;border:1.5px solid var(--line);background:var(--stage);border-radius:calc(var(--u)*1);padding:calc(var(--u)*1)}
+.step i{font-style:normal;width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);border-radius:50%;background:var(--ink);color:var(--stage);display:grid;place-items:center;font-weight:800;font-size:calc(var(--u)*1.2)}
+.step.on{border-color:var(--rose);background:var(--rose-soft)}
+.step.on i{background:var(--rose);color:#fff}
+.step b{font-size:calc(var(--u)*1.15);line-height:1.2}
+/* video */
+.vid{position:relative;aspect-ratio:16/9;background:#05080d;border-radius:calc(var(--u)*1.2);overflow:hidden;display:grid;place-items:center;min-height:0;max-height:100%}
+.vid video{width:100%;height:100%;object-fit:contain;background:#000}
+.drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*.9);padding:calc(var(--u)*2);text-align:center;color:#e9eef5;border:2px dashed #ffffff55;border-radius:calc(var(--u)*1.2)}
+.drop.over{border-color:var(--rose);background:#d94e6822}
+.drop .play{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:50%;background:var(--rose);display:grid;place-items:center}
+.drop .play svg{width:40%;height:40%;fill:#fff;margin-left:6%}
+.drop .btn{background:#fff;color:#14202e;border-color:#fff;text-align:center}
+.link{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.link input{flex:1;min-width:0;border:1.5px solid var(--line);background:var(--stage);color:var(--ink);border-radius:calc(var(--u)*.7);padding:calc(var(--u)*.6) calc(var(--u)*.9);font:inherit;font-size:calc(var(--u)*1.05)}
+/* portal mock */
+.phone{border:2px solid var(--line);border-radius:calc(var(--u)*2);background:var(--stage);padding:calc(var(--u)*1.1);display:flex;flex-direction:column;gap:calc(var(--u)*.8);min-width:0;box-shadow:var(--shadow)}
+.hero{display:flex;gap:calc(var(--u)*1);align-items:center;border-radius:calc(var(--u)*1.2);padding:calc(var(--u)*1.2)}
+.hero.ok{background:var(--ok-soft)}.hero.wait{background:var(--rose-soft)}
+.hero .ic{width:calc(var(--u)*3.6);height:calc(var(--u)*3.6);border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:calc(var(--u)*1.8);flex:none}
+.hero.ok .ic{background:var(--ok)}.hero.wait .ic{background:var(--rose)}
+.hero h4{margin:0;font:800 calc(var(--u)*1.7)/1.12 var(--fd)}
+.hero p{margin:2px 0 0;font-size:calc(var(--u)*1.1);color:var(--muted)}
+.drop-b{width:calc(var(--u)*4);flex:none;fill:var(--rose)}
+.mini{background:var(--panel);border:1px solid var(--line);border-radius:calc(var(--u)*1);padding:calc(var(--u)*.9);font-size:calc(var(--u)*1.05)}
+/* automatizaciones */
+.clock{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1)}
+.clock .btn{display:flex;flex-direction:column;gap:2px}
+.clock .btn b{font:800 calc(var(--u)*2.2)/1 var(--fd);font-variant-numeric:tabular-nums}
+.mail{background:#fff;color:#1e293b;border-radius:calc(var(--u)*1);border:1px solid #e6eaf0;border-top:4px solid #d94e68;padding:calc(var(--u)*1.2);display:flex;flex-direction:column;gap:calc(var(--u)*.7)}
+.mail small{font-size:calc(var(--u)*.85);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#d94e68}
+.mail h5{margin:0;font:800 calc(var(--u)*1.9)/1.15 var(--fd)}
+.mail p{margin:0;font-size:calc(var(--u)*1.1);line-height:1.5}
+.mail .cta{align-self:flex-start;background:#d94e68;color:#fff;font-weight:700;font-size:calc(var(--u)*1.05);padding:calc(var(--u)*.6) calc(var(--u)*1.3);border-radius:calc(var(--u)*.7)}
+/* arquitectura */
+.arch{display:grid;grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*.9)}
+.node{display:flex;flex-direction:column;gap:3px;border:1.5px solid var(--line);background:var(--stage);border-radius:calc(var(--u)*1);padding:calc(var(--u)*1);text-align:left}
+.node b{font-size:calc(var(--u)*1.2)}.node span{font-size:calc(var(--u)*.95);color:var(--muted)}
+.node.on{border-color:var(--rose);background:var(--rose-soft)}
+/* capas */
+.layers{display:flex;flex-direction:column;gap:calc(var(--u)*.7)}
+.layer{display:flex;gap:calc(var(--u)*1);align-items:center;border-radius:calc(var(--u)*1);padding:calc(var(--u)*.9) calc(var(--u)*1.1);border:1.5px solid var(--line);background:var(--stage);text-align:left;width:100%}
+.layer i{font-style:normal;width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);border-radius:50%;display:grid;place-items:center;background:var(--ok);color:#fff;font-weight:800;flex:none}
+.layer.on{background:var(--ok-soft);border-color:var(--ok)}
+/* matriz */
+.plane{position:relative;flex:1;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:calc(var(--u)*.8);min-width:0}
+.col>.row{flex:none}
+.plane .q{position:absolute;width:50%;height:50%;display:flex;padding:calc(var(--u)*.6);font-size:calc(var(--u)*.9);font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.plane .dotb{position:absolute;transform:translate(-50%,50%);width:calc(var(--u)*2.5);height:calc(var(--u)*2.5);border-radius:50%;border:2px solid var(--stage);font-size:calc(var(--u)*.85);font-weight:800;color:#fff;padding:0;display:grid;place-items:center}
+.dotb.apoya{background:var(--ok)}.dotb.neutral{background:var(--warn)}.dotb.resist{background:var(--bad)}
+.dotb.dim{opacity:.18}.dotb.sel{outline:3px solid var(--ink);z-index:3}
+.ax{position:absolute;font-size:calc(var(--u)*.9);color:var(--muted);font-weight:700}
+/* riesgos */
+.rgrid{display:grid;grid-template-columns:auto repeat(5,1fr);grid-template-rows:repeat(5,1fr) auto;gap:3px;min-height:0}
+.rcell{border-radius:6px;display:flex;flex-wrap:wrap;gap:3px;align-content:center;justify-content:center;padding:3px;min-height:calc(var(--u)*3.6)}
+.rcell.r{background:var(--bad-soft)}.rcell.y{background:var(--warn-soft)}.rcell.g{background:var(--ok-soft)}
+.rk{border:0;border-radius:6px;padding:2px 6px;font-size:calc(var(--u)*.95);font-weight:800;background:var(--navy);color:#fff}
+.rk.op{background:#7d3c98}.rk.sel{outline:3px solid var(--ink)}
+.rlab{font-size:calc(var(--u)*.85);color:var(--muted);font-weight:700;display:grid;place-items:center;padding:0 4px;text-align:right}
+/* timeline */
+.tl{position:relative;border:1px solid var(--line);border-radius:calc(var(--u)*1);background:var(--panel);padding:calc(var(--u)*1)}
+.tlh{display:grid;grid-template-columns:calc(var(--u)*15) 1fr;align-items:center;gap:calc(var(--u)*.6)}
+.weeks{display:grid;grid-template-columns:repeat(12,1fr);font-size:calc(var(--u)*.85);color:var(--muted);font-weight:700;text-align:center}
+.lane{position:relative;height:calc(var(--u)*2.7);background:repeating-linear-gradient(90deg,transparent 0,transparent calc(100%/12 - 1px),var(--line) calc(100%/12 - 1px),var(--line) calc(100%/12))}
+.pbar{position:absolute;top:15%;height:70%;border-radius:calc(var(--u)*.6);border:0;color:#fff;font-weight:700;font-size:calc(var(--u)*.95);display:flex;align-items:center;padding:0 calc(var(--u)*.7);white-space:nowrap;overflow:hidden}
+.pbar.on{outline:3px solid var(--ink)}
+.ms{position:absolute;top:-2px;width:0;height:0}
+.ms i{position:absolute;left:-7px;top:0;width:14px;height:14px;background:var(--rose);transform:rotate(45deg);border-radius:2px}
+/* evm */
+.evsvg{width:100%;height:auto;display:block}
+input[type=range]{width:100%;accent-color:var(--navy)}
+.sig{display:inline-block;padding:2px 10px;border-radius:999px;font-size:calc(var(--u)*1);font-weight:800}
+.sig.ok{background:var(--ok-soft);color:var(--ok)}.sig.warn{background:var(--warn-soft);color:var(--warn)}.sig.bad{background:var(--bad-soft);color:var(--bad)}
+/* equipo */
+.person{display:flex;flex-direction:column;gap:2px}
+.person b{font-size:calc(var(--u)*1.25)}.person span{font-size:calc(var(--u)*1);color:var(--muted)}
+.ava{width:calc(var(--u)*3.2);height:calc(var(--u)*3.2);border-radius:50%;background:var(--navy);color:var(--stage);display:grid;place-items:center;font-weight:800;font-size:calc(var(--u)*1.3);margin-bottom:4px}
+/* notas, indice */
+#notes{position:fixed;right:12px;bottom:12px;width:min(420px,calc(100vw - 24px));max-height:60vh;overflow:auto;background:var(--stage);border:1.5px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);padding:14px;z-index:20;font-size:15px;line-height:1.45}
+#notes h4{margin:0 0 6px;font:800 16px var(--fd)}
+#notes .meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+#notes ul{margin:0;padding-left:1.1em}
+#over{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 92%,transparent);z-index:30;overflow:auto;padding:16px}
+#over .gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:1200px;margin:0 auto}
+#over button.card{text-align:left;font-size:14px;line-height:1.3}
+#over button.card:hover{border-color:var(--rose)}
+#over small{color:var(--muted);font-weight:700}
+/* modo documento en pantallas angostas */
+@media (max-width:860px){
+  .shell{padding-inline:12px}
+  .stage{--u:.62rem;aspect-ratio:auto;container-type:normal;width:100%;border-radius:12px}
+  .slide{position:relative;inset:auto;overflow:visible;padding:18px 16px}
+  .slide.on{min-height:60vh}
+  .h{font-size:calc(var(--u)*3);}
+  .cover .big{font-size:calc(var(--u)*7)}
+  .g2,.g3,.g4,.cycle,.arch,.clock{grid-template-columns:1fr 1fr}
+  .row{flex-direction:column}
+  .plane{max-width:420px}
+  .tag{position:static}
+  .tlh{grid-template-columns:1fr}
+}
+@media (max-width:520px){.g2,.g3,.g4,.cycle,.arch,.clock{grid-template-columns:1fr}.tools .tool span{display:none}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="drop" viewBox="0 0 24 30"><path d="M12 1C12 1 2 13 2 19a10 10 0 0 0 20 0C22 13 12 1 12 1z"/></symbol></svg>
+
+<div class="shell" id="shell">
+  <div class="top">
+    <div class="brand"><svg viewBox="0 0 24 30" aria-hidden="true"><use href="#drop"/></svg><span>HEMO<b>CAX</b></span></div>
+    <div class="secs" id="secs" role="tablist" aria-label="Secciones"></div>
+    <div class="tools">
+      <button class="tool" id="bIdx" title="Índice (G)">Índice</button>
+      <button class="tool" id="bNotes" title="Guion y cronómetro (N)">Guion</button>
+      <button class="tool" id="bFs" title="Pantalla completa (F)">Pantalla completa</button>
+      <button class="tool" id="bTheme" title="Claro u oscuro (T)">Tema</button>
+    </div>
+  </div>
+
+  <div class="stagewrap">
+    <div class="stage" id="stage">
+
+<!-- 1 PORTADA -->
+<section class="slide cover" data-sec="p" data-title="HEMOCAX">
+  <p class="eyebrow">Proyecto de proyección universitaria · Universidad Nacional de Cajamarca · 2026</p>
+  <div class="row" style="align-items:flex-end;gap:calc(var(--u)*2)">
+    <svg class="mark" viewBox="0 0 24 30" aria-hidden="true"><use href="#drop"/></svg>
+    <h1 class="big">HEMO<b>CAX</b></h1>
+  </div>
+  <p class="tagline">Que el donante de sangre vuelva.</p>
+  <p class="lead">Plataforma para fidelizar y retener al donante voluntario del Banco de Sangre del Hospital Regional Docente de Cajamarca.</p>
+  <div class="row" style="flex-wrap:wrap;gap:calc(var(--u)*.6)" id="teamChips"></div>
+  <p class="s">Gestión de Proyectos de Sistemas I · Ing. Ena Mirella Cacho Chávez</p>
+</section>
+
+<!-- 2 PROBLEMA -->
+<section class="slide" data-sec="p" data-title="El problema">
+  <p class="eyebrow">El problema</p>
+  <h2 class="h">Donar una vez es fácil. Volver es lo que no pasa.</h2>
+  <div class="g3">
+    <div class="card red kpi"><b>5–6 h</b><span>para tener una unidad apta de O negativo cuando hay una emergencia</span></div>
+    <div class="card red kpi"><b>48 h – 5 días</b><span>tarda hoy el resultado en llegar al donante</span></div>
+    <div class="card red kpi"><b>0</b><span>canales institucionales: se escribe desde el celular personal del médico</span></div>
+  </div>
+  <p class="s">Toca un problema para ver qué hace HEMOCAX. Fuente: levantamiento con la Dra. Marimar y la Jefatura del Banco de Sangre.</p>
+  <div class="row fill">
+    <div class="col" style="flex:1.1" id="pains"></div>
+    <div class="col" style="flex:1">
+      <div class="card green fill" id="painAns" style="display:flex;flex-direction:column;justify-content:center;gap:calc(var(--u)*.6)"></div>
+      <div class="quote">«Las emergencias no deberían estar esperando a las donaciones, sino que las donaciones deben esperar a las emergencias mediante un stock que las respalde.»</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 PROPUESTA -->
+<section class="slide" data-sec="p" data-title="La propuesta">
+  <p class="eyebrow">La propuesta</p>
+  <h2 class="h">No reemplaza nada. Se suma a lo que el hospital ya tiene.</h2>
+  <div class="row fill">
+    <div class="col" style="flex:1">
+      <div class="card"><p class="b t">Herramienta complementaria</p><ul class="l s"><li>Base de datos propia, independiente del sistema actual.</li><li>No interviene en procesos asistenciales ni en pacientes receptores.</li><li>Solo trabaja con donantes, con su consentimiento.</li></ul></div>
+      <div class="card blue row" style="align-items:center;gap:calc(var(--u)*1.5)"><div class="kpi"><b>S/ 0</b><span>costo de desarrollo para el hospital</span></div><div class="kpi"><b>S/ 0</b><span>infraestructura en el piloto</span></div></div>
+    </div>
+    <div class="col" style="flex:1.2">
+      <p class="b t">Siete objetivos. Toca uno.</p>
+      <div class="col" id="oes" style="gap:calc(var(--u)*.55)"></div>
+      <div class="card amber t" id="oeAns" style="min-height:calc(var(--u)*5)"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 CICLO -->
+<section class="slide" data-sec="p" data-title="Cómo funciona">
+  <p class="eyebrow">Cómo funciona</p>
+  <h2 class="h">Un ciclo que se cierra: el donante regresa.</h2>
+  <div class="cycle" id="cycle"></div>
+  <div class="card fill" id="cycleAns" style="display:flex;flex-direction:column;justify-content:center;gap:calc(var(--u)*.5)"></div>
+  <p class="s">Dos caras del mismo sistema: un panel para el personal y un portal de una sola pantalla para el donante, más un reloj que recuerda a las 8 de la mañana.</p>
+</section>
+
+<!-- 5 VIDEO -->
+<section class="slide" data-sec="p" data-title="El sistema en acción">
+  <p class="eyebrow">Demostración</p>
+  <h2 class="h" style="font-size:calc(var(--u)*2.8)">El sistema en acción</h2>
+  <div class="row fill">
+    <div class="col" style="flex:2.3">
+      <div class="vid" id="vid">
+        <video id="demoVideo" controls playsinline preload="metadata" hidden></video>
+        <div class="drop" id="dropz">
+          <div class="play"><svg viewBox="0 0 24 24"><path d="M5 3l15 9-15 9z"/></svg></div>
+          <b style="font-size:calc(var(--u)*1.6)">Video de la simulación del software</b>
+          <span style="font-size:calc(var(--u)*1.05);opacity:.8">Arrastra el archivo aquí o elígelo desde tu computadora. Se reproduce sin internet.</span>
+          <label class="btn" for="videoFile">Elegir video</label>
+          <input id="videoFile" type="file" accept="video/*" hidden>
+        </div>
+      </div>
+      <div class="link"><input id="vidLink" type="url" placeholder="O pega aquí el enlace del video (YouTube, Drive)" aria-label="Enlace del video"><a class="btn" id="vidOpen" href="#" target="_blank" rel="noopener" hidden>Abrir en otra pestaña</a></div>
+    </div>
+    <div class="col" style="flex:1">
+      <p class="b t">Lo que se ve en el video</p>
+      <ol class="l" style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:calc(var(--u)*.5);font-size:calc(var(--u)*1.15)">
+        <li>Ingreso con DNI y contraseña</li><li>Enfermería busca al donante y registra la donación</li><li>El médico libera un resultado y marca otro como crítico</li>
+        <li>El correo llega al donante</li><li>El donante ve su estado en el celular</li><li>Campañas, reportes y cuentas del administrador</li>
+      </ol>
+      <div class="card blue s">Con el archivo <b>demo.mp4</b> junto a esta presentación, el video se carga solo.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 PORTAL -->
+<section class="slide" data-sec="p" data-title="Portal del donante">
+  <p class="eyebrow">Para el donante</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Una sola pantalla. Una sola pregunta: ¿puedo donar?</h2>
+  <div class="row fill">
+    <div class="col" style="flex:1">
+      <p class="t b">Cambia el caso del donante</p>
+      <div class="col" id="portalBtns" style="gap:calc(var(--u)*.5)"></div>
+      <ul class="l s" style="margin-top:calc(var(--u)*.6)">
+        <li>Letra grande, íconos y colores: se entiende aunque se lea poco.</li>
+        <li>Ingresa solo con su DNI; la contraseña es fácil de dictar por teléfono.</li>
+        <li>Pensado para celulares de gama baja y conexión lenta: el código del donante pesa 7 KB comprimido.</li>
+        <li>Nunca ve un resultado crítico; el personal lo contacta.</li>
+      </ul>
+    </div>
+    <div class="phone" style="flex:1.05" id="phone"></div>
+  </div>
+</section>
+
+<!-- 7 PANEL -->
+<section class="slide" data-sec="p" data-title="Panel del personal">
+  <p class="eyebrow">Para el personal</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Cada puesto ve lo suyo, con palabras de su trabajo.</h2>
+  <div class="row" id="roles"></div>
+  <div class="row fill">
+    <div class="card fill" id="roleBox" style="flex:1.3"></div>
+    <div class="card red" style="flex:1;display:flex;flex-direction:column;gap:calc(var(--u)*.6)">
+      <p class="b t">El resultado crítico no viaja por el sistema</p>
+      <div class="row" style="align-items:center;gap:calc(var(--u)*.6);flex-wrap:wrap">
+        <span class="chip">Pendiente</span>→<span class="chip" style="background:var(--ok-soft)">Normal: se libera y se avisa</span>
+      </div>
+      <div class="row" style="align-items:center;gap:calc(var(--u)*.6);flex-wrap:wrap">
+        <span class="chip">Pendiente</span>→<span class="chip" style="background:var(--bad);color:#fff;border-color:var(--bad)">Crítico: no se muestra ni se envía</span>
+      </div>
+      <p class="s">El médico llama al donante o lo cita. Así lo exige el procedimiento del servicio.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ARQUITECTURA -->
+<section class="slide" data-sec="p" data-title="Arquitectura">
+  <p class="eyebrow">Arquitectura</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">La base de datos decide quién puede qué.</h2>
+  <div class="arch" id="arch"></div>
+  <div class="row fill">
+    <div class="card fill" id="archAns" style="flex:1.4"></div>
+    <div class="col" style="flex:1">
+      <div class="g2">
+        <div class="card kpi"><b>13</b><span>tablas, todas con seguridad por filas</span></div>
+        <div class="card kpi"><b>23</b><span>políticas de acceso</span></div>
+        <div class="card kpi"><b>14</b><span>funciones y 9 triggers</span></div>
+        <div class="card kpi"><b>6</b><span>rutas de servidor</span></div>
+      </div>
+      <p class="s">Dos caminos: el navegador habla con la base y esta decide (A), o pasa por una ruta que valida y actúa con la clave de servicio (B).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 SEGURIDAD -->
+<section class="slide" data-sec="p" data-title="Seguridad y privacidad">
+  <p class="eyebrow">Seguridad y privacidad</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Datos de salud: tres barreras para lo más delicado.</h2>
+  <div class="row fill">
+    <div class="col" style="flex:1.1">
+      <p class="t b">Resultado crítico: toca cada barrera</p>
+      <div class="layers" id="layers"></div>
+      <div class="card green s" id="layerAns" style="min-height:calc(var(--u)*5)"></div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card"><p class="t b">Ley N.° 29733 aplicada al diseño</p>
+        <ul class="l s"><li>Consentimiento con versión, fecha y quién lo registró; se puede revocar.</li><li>Los correos nunca llevan diagnóstico ni resultados.</li><li>Bitácora de quién cambió qué campo, sin guardar los valores.</li><li>El donante descarga sus datos; el administrador puede anonimizarlos.</li></ul></div>
+      <div class="card blue"><p class="t b">Revisión técnica propia</p>
+        <ul class="l s"><li>0 vulnerabilidades en las dependencias de ejecución.</li><li>Las 6 rutas rechazan con 401 una petición sin credencial.</li><li>16 hallazgos documentados; 1 de severidad alta con corrección preparada.</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 AUTOMATIZACIONES -->
+<section class="slide" data-sec="p" data-title="Recordatorios automáticos">
+  <p class="eyebrow">Fidelización</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Cuatro correos que salen solos, sin repetirse.</h2>
+  <div class="clock" id="clock"></div>
+  <div class="row fill">
+    <div class="col" style="flex:1"><div class="card fill" id="autoAns"></div>
+      <div class="g3"><div class="card green s"><b>Con consentimiento</b></div><div class="card green s"><b>Plantilla aprobada</b></div><div class="card green s"><b>Una vez por periodo</b></div></div></div>
+    <div class="col" style="flex:1"><div class="mail" id="mailBox"></div></div>
+  </div>
+</section>
+
+<!-- 11 GESTION -->
+<section class="slide gestion" data-sec="g" data-title="El proyecto en cifras">
+  <p class="eyebrow">Gestión del proyecto</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Un proyecto planificado, medido y controlado.</h2>
+  <div class="g4">
+    <div class="card blue kpi"><b id="kHoras"></b><span>horas-persona planificadas</span></div>
+    <div class="card blue kpi"><b id="kSem"></b><span>semanas, del 21/07 al 05/10/2026</span></div>
+    <div class="card blue kpi"><b>8</b><span>módulos · 17 requisitos funcionales</span></div>
+    <div class="card blue kpi"><b>6</b><span>personas, con roles y RACI definidos</span></div>
+  </div>
+  <div class="row fill">
+    <div class="card fill" style="flex:1.2"><p class="t b">Enfoque híbrido</p>
+      <div class="row" style="flex-wrap:wrap;align-items:center;gap:calc(var(--u)*.6);margin-top:calc(var(--u)*.6)">
+        <span class="chip" style="background:var(--navy-soft)">Inicio</span>→<span class="chip" style="background:var(--navy-soft)">Planificación predictiva</span>→
+        <span class="chip" style="background:var(--warn-soft)">Diseñar → Construir → Probar → Validar (cada semana)</span>→<span class="chip" style="background:var(--navy-soft)">Despliegue y cierre</span></div>
+      <p class="s" style="margin-top:calc(var(--u)*.8)">Planificar lo regulado (datos de salud, presupuesto, plazo) y construir en ciclos semanales validados con el Banco de Sangre.</p></div>
+    <div class="col" style="flex:1">
+      <details class="dt"><summary>Planes del proyecto</summary><div class="in"><ul class="l s"><li>Alcance, EDT y cronograma</li><li>Costos y valor ganado</li><li>Calidad, recursos humanos, comunicaciones</li><li>Riesgos, adquisiciones y cambios</li></ul></div></details>
+      <details class="dt"><summary>Quién decide qué</summary><div class="in"><ul class="l s"><li>Cambio chico (&lt; 1 día, S/ 0): la PM</li><li>Mediano (1–3 días, &lt; S/ 50): PM con el equipo</li><li>Alto (&gt; 3 días o &gt; S/ 50): la docente</li><li>Valores clínicos y textos: Jefatura del HRDC</li></ul></div></details>
+      <details class="dt"><summary>Cómo se controla</summary><div class="in"><ul class="l s"><li>Reunión semanal de 45 min e informe cada viernes</li><li>Demostración al cierre de cada hito</li><li>Acción correctiva si SPI o CPI bajan de 0.90</li></ul></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ALCANCE / SOW -->
+<section class="slide gestion" data-sec="g" data-title="Alcance y SOW">
+  <p class="eyebrow">Alcance · Declaración del trabajo (SOW)</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Qué se entrega, para quién y cuándo se da por bueno.</h2>
+  <div class="row fill">
+    <div class="card fill" style="flex:1.6;overflow:auto">
+      <table class="tb"><tbody>
+        <tr><th>Propósito</th><td>Mantener la relación con el donante voluntario del Banco de Sangre del HRDC y entregarle su estado y resultados de forma segura.</td></tr>
+        <tr><th>Alcance</th><td>Plataforma web con 8 módulos: padrón, donaciones y aptitud, resultados, consentimiento y derechos del titular, correo y campañas, automatizaciones, portal del donante y panel del personal.</td></tr>
+        <tr><th>Periodo</th><td>21/07/2026 al 05/10/2026 (10.9 semanas). Ubicación: Cajamarca.</td></tr>
+        <tr><th>Entregables</th><td>Sistema en producción, repositorio y documentación técnica, manuales y ayuda integrada, video de capacitación, informe de gestión y acta de cierre.</td></tr>
+        <tr><th>Aceptación</th><td>17 requisitos funcionales verificados; 0 resultados críticos visibles para el donante; seguridad por filas en todas las tablas; piloto interno aprobado.</td></tr>
+        <tr><th>Pago</th><td>Sin costo de desarrollo para el hospital (proyección universitaria).</td></tr>
+      </tbody></table>
+    </div>
+    <div class="col" style="flex:1">
+      <details class="dt" open><summary>Fuera del alcance</summary><div class="in"><ul class="l s"><li>Reemplazar o modificar el sistema actual del Banco de Sangre</li><li>Comunicar resultados críticos por canal digital</li><li>Intervenir procesos asistenciales o datos de pacientes receptores</li><li>SMS, WhatsApp y campañas programadas (etapa siguiente)</li></ul></div></details>
+      <details class="dt"><summary>Estructura de desglose (EDT)</summary><div class="in" id="edtList"></div></details>
+      <details class="dt"><summary>Requisitos y reglas del negocio</summary><div class="in"><ul class="l s"><li>Máximo anual: 4 donaciones en hombres, 3 en mujeres</li><li>Intervalo de 90 días (valor provisional por validar)</li><li>Solo recibe mensajes quien consintió</li><li>Mensajes automáticos solo con plantilla aprobada</li></ul></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- 13 CRONOGRAMA -->
+<section class="slide gestion" data-sec="g" data-title="Cronograma">
+  <p class="eyebrow">Cronograma</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Doce semanas, cinco fases y una ruta crítica.</h2>
+  <div class="tl" id="tl"></div>
+  <div class="row fill">
+    <div class="card fill" id="phaseBox" style="flex:1.5;overflow:auto"></div>
+    <div class="col" style="flex:1">
+      <div class="card blue"><p class="b t">Ruta crítica</p><p class="s" id="ruta"></p></div>
+      <div class="card"><p class="b t">Hitos</p><div id="hitos" class="col" style="gap:4px"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 COSTOS -->
+<section class="slide gestion" data-sec="g" data-title="Costos y valor ganado">
+  <p class="eyebrow">Costos · Valor ganado (EVM)</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Se pasó 5 % del presupuesto base y la reserva lo cubre.</h2>
+  <div class="row fill">
+    <div class="col" style="flex:1.5">
+      <div class="card" style="padding:calc(var(--u)*.8)"><svg class="evsvg" id="evsvg" viewBox="0 0 640 300" role="img" aria-label="Curva S: valor planificado, valor ganado y costo real por semana"></svg></div>
+      <label class="s" for="wk" style="display:flex;justify-content:space-between"><span>Mueve la semana</span><b id="wkLab"></b></label>
+      <input type="range" id="wk" min="1" max="12" value="11">
+    </div>
+    <div class="col" style="flex:1">
+      <div class="g2" id="evk"></div>
+      <details class="dt"><summary>Presupuesto y reservas</summary><div class="in"><table class="tb" id="presu"></table></div></details>
+      <details class="dt"><summary>Costos de operación después del piloto</summary><div class="in"><ul class="l s"><li>Hoy: S/ 0 (planes gratuitos de Vercel, Supabase, Render y correo)</li><li>Si crece el uso: planes de pago por mes, referenciales: portal ≈ US$ 20, base de datos ≈ US$ 25, reloj ≈ US$ 7</li><li>Decisión pendiente de la Dirección: quién asume el costo recurrente</li></ul></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- 15 RIESGOS -->
+<section class="slide gestion" data-sec="g" data-title="Riesgos">
+  <p class="eyebrow">Riesgos</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">16 riesgos identificados y una reserva calculada, no estimada.</h2>
+  <div class="row fill">
+    <div class="col" style="flex:1.15;min-height:0">
+      <div class="row" style="gap:6px"><button class="chip on" data-f="all">Todos</button><button class="chip" data-f="Amenaza">Amenazas</button><button class="chip" data-f="Oportunidad">Oportunidades</button></div>
+      <div class="rgrid" id="rgrid" style="flex:1"></div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card fill" id="riskBox"></div>
+      <div class="card blue"><p class="s"><b>Reserva de contingencia</b> = suma del valor monetario esperado (VME) de las 6 amenazas con impacto en soles.</p><p class="b t" id="vmeTot"></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 INTERESADOS -->
+<section class="slide gestion" data-sec="g" data-title="Interesados">
+  <p class="eyebrow">Interesados · Matriz poder–interés y cubo</p>
+  <h2 class="h" style="font-size:calc(var(--u)*2.8)">15 interesados: a quién se gestiona de cerca y por qué.</h2>
+  <div class="row fill">
+    <div class="col" style="flex:1.05;min-height:0">
+      <div class="row" style="gap:6px;flex-wrap:wrap"><span class="s b" style="align-self:center">Capa del cubo (actitud):</span><button class="chip on" data-a="all">Todas</button><button class="chip" data-a="Apoya">Apoya</button><button class="chip" data-a="Neutral">Neutral</button><button class="chip" data-a="Resistencia">Resistencia</button></div>
+      <div class="plane" id="plane"></div>
+    </div>
+    <div class="col" style="flex:1">
+      <div class="card fill" id="stBox"></div>
+      <p class="s">Cada punto es un interesado. El color es su actitud (el tercer eje del cubo). Toca uno para ver por qué tiene ese nivel de poder y de interés.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 17 CALIDAD -->
+<section class="slide gestion" data-sec="g" data-title="Calidad">
+  <p class="eyebrow">Calidad</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Invertir en calidad costó S/ 1 y evitó S/ 1.64.</h2>
+  <div class="row fill">
+    <div class="col" style="flex:1.3"><div class="card"><svg class="evsvg" id="pareto" viewBox="0 0 640 270" role="img" aria-label="Diagrama de Pareto de defectos por módulo"></svg></div>
+      <p class="s">Pareto de 48 defectos registrados: 4 módulos concentran el 81 %. Ahí se enfocó la corrección.</p></div>
+    <div class="col" style="flex:1">
+      <div class="g2"><div class="card blue kpi"><b id="kCoq"></b><span>costo de la calidad (CoQ)</span></div><div class="card blue kpi"><b id="kCoqP"></b><span>del presupuesto base</span></div></div>
+      <details class="dt"><summary>Métricas ISO/IEC 25010</summary><div class="in"><ul class="l s"><li>Adecuación funcional: 17 de 17 requisitos verificados</li><li>Seguridad: 13 de 13 tablas con seguridad por filas; 0 críticos legibles</li><li>Fiabilidad: disponibilidad ≥ 99 %, correos exitosos ≥ 95 % (en seguimiento)</li><li>Usabilidad: tarea clave en ≤ 2 min (por medir en el piloto)</li><li>Mantenibilidad: compilación estricta sin errores de tipos</li></ul></div></details>
+      <details class="dt"><summary>Pruebas realizadas</summary><div class="in"><ul class="l s"><li>12 funcionales y 7 de seguridad por rol</li><li>Cada rol probado con una sesión real contra la base</li><li>Las 6 rutas verificadas sin credencial</li></ul></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- 18 EQUIPO -->
+<section class="slide gestion" data-sec="g" data-title="El equipo">
+  <p class="eyebrow">Equipo · Roles y responsabilidades</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Seis personas, un responsable por entregable.</h2>
+  <div class="g3" id="team"></div>
+  <div class="row fill">
+    <details class="dt fill" style="flex:1"><summary>Matriz RACI (26 entregables)</summary><div class="in"><div class="scroll" style="max-height:calc(var(--u)*13)"><table class="tb" id="raci"></table></div><p class="s">R hace, A responde (uno por fila), C consultado, I informado. El cliente figura donde lo afecta.</p></div></details>
+  </div>
+</section>
+
+<!-- 19 LECCIONES -->
+<section class="slide gestion" data-sec="g" data-title="Lecciones aprendidas">
+  <p class="eyebrow">Lecciones aprendidas</p>
+  <h2 class="h" style="font-size:calc(var(--u)*3)">Lo que cambiaríamos si empezáramos hoy.</h2>
+  <div class="g3 fill" id="lessons"></div>
+</section>
+
+<!-- 20 CIERRE -->
+<section class="slide" data-sec="c" data-title="Cierre">
+  <p class="eyebrow">Cierre</p>
+  <h2 class="h">Hoy HEMOCAX ya funciona. Esto es lo que dejamos.</h2>
+  <div class="g2 fill">
+    <div class="card green"><p class="t b">Entregado y verificado</p>
+      <ul class="l"><li>Sistema en producción con portal del donante y panel del personal</li><li>13 tablas protegidas; resultados críticos fuera del canal digital</li><li>Cuatro correos automáticos, listos para activarse</li><li>Informe de gestión, informe técnico, manuales y video</li><li>Repositorio documentado para la OEI</li></ul></div>
+    <div class="card amber"><p class="t b">Lo que sigue, del lado del hospital</p>
+      <ul class="l"><li>Validar con el médico el intervalo y los máximos anuales</li><li>Aprobar las plantillas de los mensajes automáticos</li><li>Definir quién asume el costo de operación si el uso crece</li><li>Revisión legal del texto de consentimiento</li><li>Piloto con el personal del Banco de Sangre</li></ul></div>
+  </div>
+  <div class="row" style="align-items:center;justify-content:space-between;flex-wrap:wrap;gap:calc(var(--u)*1)">
+    <p class="h" style="font-size:calc(var(--u)*2.8)">Gracias. <span style="color:var(--rose)">Que el donante vuelva.</span></p>
+    <p class="s">hemocax.vercel.app · github.com/dm-barr/hemocax</p>
+  </div>
+</section>
+
+    </div>
+  </div>
+
+  <div class="bar">
+    <button class="nav" id="prev" aria-label="Anterior">‹</button>
+    <div class="dots" id="dots"></div>
+    <span class="count" id="count"></span>
+    <button class="nav" id="next" aria-label="Siguiente">›</button>
+  </div>
+</div>
+
+<aside id="notes" hidden></aside>
+<div id="over" hidden><div style="max-width:1200px;margin:0 auto 12px;display:flex;justify-content:space-between;align-items:center"><b style="font:800 20px var(--fd)">Índice</b><button class="tool" id="overClose">Cerrar (Esc)</button></div><div class="gr" id="overGr"></div></div>
+
+<script>
+const D = __DATA__;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const money = (n) => 'S/ ' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fd = (iso) => { const p = iso.split('-'); return p[2] + '/' + p[1]; };
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+/* ---------- guion por diapositiva: voz, minutos, texto ---------- */
+const NOTES = [
+  ['Diana', 0.5, ['Buenos días. Somos el equipo de HEMOCAX, un proyecto de la UNC para el Banco de Sangre del HRDC.', 'La idea cabe en una frase: que el donante de sangre vuelva.']],
+  ['Adriana', 1.25, ['Hablamos con la Dra. Marimar y la Jefatura del Banco de Sangre. El donante dona una vez y casi nunca vuelve.', 'Conseguir O negativo en una emergencia toma 5 o 6 horas, y no hay un canal institucional para llamarlo.', 'Toquen un problema y vean qué responde HEMOCAX.']],
+  ['Adriana', 1, ['No reemplaza el sistema del hospital: se suma, con base de datos propia y solo con consentimiento.', 'Son 7 objetivos; cada uno se vuelve una función concreta.', 'Costo de desarrollo para el hospital: cero.']],
+  ['Scarlet', 1, ['Este es el ciclo completo: registro con consentimiento, donación, resultado, aviso, portal y recordatorio cuando vuelve a ser apto.', 'Dos caras: panel del personal y portal del donante.']],
+  ['Scarlet', 4, ['Reproducir el video de la simulación. Si no carga solo, usar "Elegir video".', 'Narrar las escenas de la lista de la derecha.']],
+  ['Scarlet', 0.75, ['Para el donante: una pantalla, letra grande, entra con su DNI.', 'Cambien el caso: apto, en espera o máximo anual. La regla es la misma del sistema.']],
+  ['Scarlet', 1, ['Cada puesto ve lo suyo: enfermería, médico responsable y administrador.', 'Lo más importante: un resultado crítico no se muestra ni se envía; el médico llama al donante.']],
+  ['Jesús', 1, ['La decisión central: la seguridad vive en la base de datos, no en la pantalla.', 'El navegador puede hablar con la base y esta decide qué ve cada rol; lo privilegiado pasa por seis rutas del servidor.', 'Tocar cada pieza muestra qué hace.']],
+  ['Jesús', 1.25, ['Los resultados críticos tienen tres barreras: la interfaz, la función de liberación y la política de seguridad.', 'Aplicamos la Ley 29733: consentimiento versionado, bitácora, descarga y anonimización.', 'Revisamos nuestro propio sistema y documentamos 16 hallazgos; el alto ya tiene corrección preparada.']],
+  ['Darick', 1, ['Cuatro correos salen solos a las 8:00, 8:15, 8:30 y 8:45 hora de Lima.', 'Solo a quien consintió, solo con plantilla aprobada por la Jefatura y una sola vez por periodo, gracias a índices únicos.', 'Por defecto el sistema simula: no envía nada hasta activarlo.']],
+  ['Diana', 1, ['Pasamos a la gestión. Seis personas, 924 horas, 10.9 semanas, 8 módulos.', 'Enfoque híbrido: planificar lo regulado y construir en ciclos semanales validados.', 'Los paneles se abren con un toque.']],
+  ['Adriana', 1, ['Esta es la declaración del trabajo: propósito, alcance, entregables, aceptación y costo para el hospital.', 'También lo que queda fuera: no toca el sistema actual y no comunica críticos.']],
+  ['Diana', 0.75, ['Cinco fases en 12 semanas. Toquen una fase para ver sus actividades; en rojo están las de la ruta crítica.']],
+  ['Diana', 1.25, ['Presupuesto base de S/ 7,652 y reserva de contingencia de S/ 860.80, calculada con el valor monetario esperado de los riesgos.', 'Mueven la semana: hubo atraso entre la 6 y la 9, se recuperó con horas extra y el costo final proyectado supera 5 % el presupuesto base.', 'Ese sobrecosto usa menos de la mitad de la contingencia.']],
+  ['Dider', 1, ['Dieciséis riesgos: doce amenazas y cuatro oportunidades.', 'Uno se materializó: el plan gratuito del reloj bloqueó el correo. Ya estaba previsto y lo resolvimos moviendo el envío al portal.', 'La reserva sale de sumar el VME, no de un porcentaje.']],
+  ['Adriana', 1.25, ['Matriz poder–interés y cubo: el color es la actitud. Toquen un punto para ver por qué tiene ese nivel.', 'La Dra. Marimar y la Jefatura se gestionan de cerca; la Dirección y la OEI se mantienen satisfechas.', 'No identificamos interesados con resistencia activa; el riesgo está en el cambio de hábitos del personal.']],
+  ['Dider', 1, ['El costo de calidad es 30 % del presupuesto base y deja una relación costo-beneficio de 1.64.', 'El Pareto nos dijo dónde corregir: comunicaciones y automatizaciones, importación, portal y panel.']],
+  ['Diana', 0.75, ['Seis roles y 26 entregables, cada uno con un solo responsable de aprobar y uno de ejecutar.', 'El cliente aparece donde lo afecta.']],
+  ['Dider', 1, ['Estas son las lecciones: probar integraciones externas desde la primera semana, diseñar la seguridad primero, y prototipar con usuarios reales.']],
+  ['Diana', 0.75, ['El sistema ya funciona y está documentado. Quedan decisiones del hospital: valores clínicos, plantillas, costo recurrente y revisión legal.', 'Gracias. Que el donante vuelva.']],
+];
+
+/* ---------- datos de interfaz ---------- */
+const PAINS = [
+  ['Dona una vez y no vuelve', 'Un recordatorio automático avisa cuando vuelve a ser apto, y su portal le muestra la fecha.'],
+  ['Se escribe desde el celular personal del médico', 'Correos institucionales desde el sistema, con registro de cada envío y quién lo hizo.'],
+  ['Faltan grupos poco frecuentes, como O negativo', 'Convocatoria dirigida por grupo sanguíneo y aptitud, con vista previa antes de enviar.'],
+  ['El resultado tarda de 48 horas a 5 días', 'El médico libera y el donante lo ve en su portal; hay alertas a las 36 y 48 horas.'],
+  ['Nadie agradece ni da seguimiento', 'Agradecimiento tras donar, saludo de cumpleaños y reconocimiento al donante frecuente.'],
+];
+const OES = [
+  ['OE-01 Padrón digital', 'Registro con grupo sanguíneo, contacto y consentimiento. Se carga uno a uno o desde Excel.'],
+  ['OE-02 Recordatorio de retorno', 'Aviso automático cuando se cumple el intervalo para volver a donar.'],
+  ['OE-03 Fidelización', 'Agradecimiento, cumpleaños y reconocimiento anual.'],
+  ['OE-04 Campañas e información', 'Mensajes del Banco de Sangre y contenido educativo en el portal.'],
+  ['OE-05 Resultados en 48 h', 'Entrega digital del resultado no crítico, previa liberación del médico.'],
+  ['OE-06 Convocatoria dirigida', 'Envío a un grupo sanguíneo, con prioridad en los menos frecuentes.'],
+  ['OE-07 Datos seguros', 'Ley N.° 29733: consentimiento, bitácora, permisos por rol y resultados críticos protegidos.'],
+];
+const CYCLE = [
+  ['Registro', 'Enfermería registra al donante. Si acepta recibir correos, queda su consentimiento con versión y fecha.'],
+  ['Donación', 'La base de datos impone el máximo anual (4 hombres, 3 mujeres) y avisa si falta el intervalo.'],
+  ['Resultado', 'Nace pendiente. El médico lo libera con un mensaje o lo marca como crítico.'],
+  ['Aviso', 'Correo institucional con el diseño del hospital. Invita a entrar al portal, sin datos médicos.'],
+  ['Portal', 'El donante entra con su DNI y ve su estado, su resultado y las campañas.'],
+  ['Vuelve', 'A las 8:15 el reloj le avisa que ya puede donar de nuevo, y el ciclo empieza otra vez.'],
+];
+const PORTAL = {
+  apto: { l: 'Ya puedes volver a donar', ok: true, t: 'Acércate al Banco de Sangre. El personal de salud te atenderá.', sub: 'Caso: donó hace 4 meses' },
+  espera: { l: 'Podrás donar desde el 18 de noviembre', ok: false, t: 'Todavía no pasó el tiempo mínimo entre donaciones.', sub: 'Caso: donó hace 40 días' },
+  maximo: { l: 'Ya donaste todas las veces permitidas este año', ok: false, t: 'Podrás donar de nuevo desde el 1 de enero.', sub: 'Caso: una mujer con 3 donaciones este año' },
+};
+const ROLES = {
+  Enfermería: ['Busca al donante por DNI o nombre y ve si puede donar hoy', 'Registra la donación (la base rechaza si supera el máximo)', 'Registra el consentimiento de correos', 'Importa donantes desde Excel', 'Envía correos y campañas con vista previa'],
+  'Médico responsable': ['Revisa los resultados pendientes, los más antiguos primero', 'Libera un resultado con un mensaje para el donante', 'Marca un resultado como crítico (nunca se muestra ni se envía)', 'Avisa por correo que hay información en el portal'],
+  Administrador: ['Crea cuentas por puesto y restablece contraseñas', 'Ajusta intervalos, máximos, recomendaciones y datos de contacto', 'Aprueba los mensajes automáticos', 'Consulta la actividad: quién cambió qué', 'Atiende los derechos del titular: descarga y anonimización'],
+};
+const ARCH = [
+  ['Navegador', 'React · supabase-js', 'Muestra las pantallas y habla con la base de datos con la identidad del usuario. Un donante descarga solo el código del donante (7 KB comprimidos).'],
+  ['Vercel', 'Next.js · 6 rutas', 'Aloja el portal y ejecuta las rutas que necesitan la clave de servicio: crear cuentas, anonimizar, enviar correo y correr automatizaciones.'],
+  ['Supabase', 'PostgreSQL 17 · Auth', 'Guarda los datos y decide los permisos: seguridad por filas, triggers y funciones. Es la autoridad, no la pantalla.'],
+  ['Render', 'Reloj en Python', 'Solo decide cuándo: a las 8:00, 8:15, 8:30 y 8:45 llama al portal. El envío lo hace Vercel porque Render gratuito bloquea el correo.'],
+  ['Gmail', 'SMTP seguro', 'Entrega los correos con la contraseña de aplicación guardada solo en el servidor.'],
+];
+const LAYERS = [
+  ['La interfaz', 'El panel no ofrece liberar un resultado marcado como crítico, y el portal solo muestra estados liberados.'],
+  ['La función de liberación', 'Aunque alguien llame a la API directamente, la función solo libera si el resultado está pendiente y no es crítico, y quien llama tiene permiso de liberar.'],
+  ['La política de seguridad', 'La base devuelve cero filas de un crítico a un donante, aunque lo pida directamente. Probado con una sesión de donante.'],
+];
+const AUTO = [
+  ['08:00', 'Cumpleaños', 'Donantes que cumplen años hoy, una vez al año.', ['CUMPLEAÑOS', '¡Feliz cumpleaños!', 'Feliz cumpleaños, Ana. Desde HEMOCAX y el Banco de Sangre te deseamos un excelente día. Gracias por formar parte de nuestra comunidad de donantes.', null]],
+  ['08:15', 'Recordatorio', 'Donantes que ya vuelven a ser aptos y donaron antes, una vez por donación.', ['RECORDATORIO', 'Ya puedes volver a donar', 'Hola Luis. Según el intervalo registrado desde tu última donación, puedes volver a considerar participar como donante. La evaluación final corresponde al personal de salud.', 'Entrar a mi portal']],
+  ['08:30', 'Agradecimiento', 'Donaciones de los últimos 7 días, una vez por donación.', ['GRACIAS', 'Gracias por donar sangre', 'Hola Rosa. Gracias por tu donación voluntaria. Cuídate y sigue las recomendaciones que te brindó el personal de salud.', null]],
+  ['08:45', 'Reconocimiento', 'Donantes que alcanzaron su máximo anual, una vez al año.', ['RECONOCIMIENTO', 'Gracias por tu compromiso', 'Hola Diego. Gracias por tu compromiso y tus donaciones de este año. Tu solidaridad es muy valiosa para la comunidad.', null]],
+];
+const LESSONS = [
+  ['Probar el correo desde la semana 1', 'El plan gratuito del reloj bloqueó el correo y costó 16 horas rehacerlo.', 'Hacer una prueba de concepto de cada servicio externo antes de diseñar sobre él.'],
+  ['Validar el canal con el cliente', 'La propuesta ofrecía WhatsApp y SMS; el canal real fue el correo.', 'Confirmar restricciones y costos del canal antes de comprometerlos en el alcance.'],
+  ['Seguridad primero', 'La seguridad en la base evitó fallas de permisos, pero exigió probar con cada rol.', 'Diseñarla antes de construir y probar con una sesión de cada rol en cada despliegue.'],
+  ['Diseñar para el donante rural', 'Parte de los donantes usa celulares de gama baja y conexión lenta.', 'Prototipar con usuarios reales y medir el peso desde el inicio.'],
+  ['Nivelar la carga del equipo', 'La semana 9 concentró 140 horas y provocó horas extra.', 'Adelantar el frontend a las semanas con baja carga.'],
+  ['Una fuente de verdad por regla', 'El máximo anual está en la base y también como parámetro en pantalla.', 'Mantener cada regla en un solo lugar y probarla automáticamente.'],
+];
+
+/* ---------- navegación ---------- */
+const slides = $$('.slide');
+const N = slides.length;
+let cur = 0;
+const SECS = [['p', 'Producto', 0], ['g', 'Gestión', 10], ['c', 'Cierre', 19]];
+let tmin = 0; const cum = NOTES.map((n) => (tmin += n[1]));
+function secOf(i) { return slides[i].dataset.sec; }
+function buildNav() {
+  $('#secs').innerHTML = SECS.map((s) => `<button class="sec" role="tab" data-i="${s[2]}" data-s="${s[0]}">${s[1]}</button>`).join('');
+  $('#dots').innerHTML = slides.map((s, i) => `<button class="dot ${secOf(i) === 'g' ? 'g' : ''}" data-i="${i}" aria-label="Diapositiva ${i + 1}: ${esc(s.dataset.title)}"></button>`).join('');
+  $('#overGr').innerHTML = slides.map((s, i) => `<button class="card" data-i="${i}"><small>${i + 1} · ${NOTES[i][0]} · ${NOTES[i][1]} min</small><br><b>${esc(s.dataset.title)}</b></button>`).join('');
+}
+function show(i, push = true) {
+  cur = Math.max(0, Math.min(N - 1, i));
+  slides.forEach((s, k) => s.classList.toggle('on', k === cur));
+  $$('#dots .dot').forEach((d, k) => d.classList.toggle('on', k === cur));
+  $$('#secs .sec').forEach((b) => b.classList.toggle('on', b.dataset.s === secOf(cur)));
+  $('#count').textContent = (cur + 1) + ' / ' + N;
+  $('#prev').disabled = cur === 0; $('#next').disabled = cur === N - 1;
+  if (push) { try { history.replaceState(null, '', '#s' + (cur + 1)); } catch (e) {} }
+  store.set('hx-slide', String(cur));
+  renderNotes();
+  if (secOf(cur) === 'g') { const d = $('#stage'); d.scrollTop = 0; }
+  window.scrollTo({ top: 0 });
+}
+function renderNotes() {
+  const n = NOTES[cur];
+  $('#notes').innerHTML = `<h4>${cur + 1}. ${esc(slides[cur].dataset.title)}</h4><div class="meta"><span class="chip rose">Voz: ${n[0]}</span><span class="chip">${n[1]} min</span><span class="chip">Acumulado ${cum[cur].toFixed(1)} de ${tmin.toFixed(1)} min</span></div><ul>${n[2].map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+    <div class="meta" style="margin-top:10px;align-items:center"><button class="tool" id="tm">${timer.run ? 'Pausar' : 'Iniciar'} cronómetro</button><b class="num" id="tv">${fmtT(timer.s)}</b></div>`;
+  $('#tm').onclick = () => { timer.run = !timer.run; renderNotes(); };
+}
+const timer = { s: 0, run: false };
+const fmtT = (s) => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+setInterval(() => { if (timer.run) { timer.s++; const el = $('#tv'); if (el) el.textContent = fmtT(timer.s); } }, 1000);
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-i]');
+  if (!t) return;
+  if (t.closest('#secs') || t.closest('#dots')) show(+t.dataset.i);
+  else if (t.closest('#overGr')) { show(+t.dataset.i); $('#over').hidden = true; }
+});
+$('#prev').onclick = () => show(cur - 1);
+$('#next').onclick = () => show(cur + 1);
+$('#bIdx').onclick = () => { $('#over').hidden = false; };
+$('#overClose').onclick = () => { $('#over').hidden = true; };
+$('#bNotes').onclick = () => { $('#notes').hidden = !$('#notes').hidden; };
+$('#bFs').onclick = () => { try { const el = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else el.requestFullscreen().catch(() => {}); } catch (e) {} };
+function setTheme(m) { document.documentElement.dataset.theme = m; store.set('hx-theme', m); }
+$('#bTheme').onclick = () => { const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; setTheme(dark ? 'light' : 'dark'); };
+document.addEventListener('keydown', (e) => {
+  if (e.target.matches('input,textarea')) return;
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'PageDown' || (k === ' ' && !e.target.closest('button,summary'))) { e.preventDefault(); show(cur + 1); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); show(cur - 1); }
+  else if (k === 'Home') show(0); else if (k === 'End') show(N - 1);
+  else if (k === 'Escape') { $('#over').hidden = true; }
+  else if (k === 'g' || k === 'G') $('#over').hidden = !$('#over').hidden;
+  else if (k === 'n' || k === 'N') $('#bNotes').click();
+  else if (k === 'f' || k === 'F') $('#bFs').click();
+  else if (k === 't' || k === 'T') $('#bTheme').click();
+});
+let tx = null;
+$('#stage').addEventListener('touchstart', (e) => { tx = e.touches[0].clientX; }, { passive: true });
+$('#stage').addEventListener('touchend', (e) => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null; if (Math.abs(dx) > 70 && !e.target.closest('input,.scroll')) show(cur + (dx < 0 ? 1 : -1)); }, { passive: true });
+
+/* ---------- construcciones por diapositiva ---------- */
+function build() {
+  // portada
+  $('#teamChips').innerHTML = D.equipo.map((p) => `<span class="chip">${esc(p.corto)} · ${esc(p.rol.split(' y ')[0])}</span>`).join('');
+  // problemas
+  $('#pains').innerHTML = PAINS.map((p, i) => `<button class="btn ${i === 0 ? 'on' : ''}" data-p="${i}">${esc(p[0])}</button>`).join('');
+  const setPain = (i) => { $$('#pains .btn').forEach((b, k) => b.classList.toggle('on', k === i)); $('#painAns').innerHTML = `<p class="s b" style="color:var(--ok)">HEMOCAX responde</p><p class="t b" style="font-size:calc(var(--u)*1.7)">${esc(PAINS[i][1])}</p>`; };
+  $('#pains').onclick = (e) => { const b = e.target.closest('[data-p]'); if (b) setPain(+b.dataset.p); }; setPain(0);
+  // objetivos
+  $('#oes').innerHTML = OES.map((o, i) => `<button class="btn ${i === 0 ? 'on' : ''}" data-o="${i}">${esc(o[0])}</button>`).join('');
+  const setOe = (i) => { $$('#oes .btn').forEach((b, k) => b.classList.toggle('on', k === i)); $('#oeAns').textContent = OES[i][1]; };
+  $('#oes').onclick = (e) => { const b = e.target.closest('[data-o]'); if (b) setOe(+b.dataset.o); }; setOe(0);
+  // ciclo
+  $('#cycle').innerHTML = CYCLE.map((c, i) => `<button class="step ${i === 0 ? 'on' : ''}" data-c="${i}"><i>${i + 1}</i><b>${esc(c[0])}</b></button>`).join('');
+  const setCy = (i) => { $$('#cycle .step').forEach((b, k) => b.classList.toggle('on', k === i)); $('#cycleAns').innerHTML = `<p class="b" style="font-size:calc(var(--u)*2)">${i + 1}. ${esc(CYCLE[i][0])}</p><p class="t" style="font-size:calc(var(--u)*1.5)">${esc(CYCLE[i][1])}</p>`; };
+  $('#cycle').onclick = (e) => { const b = e.target.closest('[data-c]'); if (b) setCy(+b.dataset.c); }; setCy(0);
+  // portal
+  $('#portalBtns').innerHTML = Object.keys(PORTAL).map((k, i) => `<button class="btn ${i === 0 ? 'on' : ''}" data-k="${k}">${esc(PORTAL[k].sub)}</button>`).join('');
+  const setPortal = (k) => {
+    const p = PORTAL[k]; $$('#portalBtns .btn').forEach((b) => b.classList.toggle('on', b.dataset.k === k));
+    $('#phone').innerHTML = `<div class="hero ${p.ok ? 'ok' : 'wait'}"><div class="ic">${p.ok ? '✓' : '⏱'}</div><div style="flex:1"><h4>${esc(p.l)}</h4><p>${esc(p.t)}</p></div><svg class="drop-b" viewBox="0 0 24 30"><use href="#drop"/></svg></div>
+      <div class="mini"><b>Tu resultado</b><br>Tus resultados están normales. Gracias por donar.</div>
+      <div class="mini"><b>Qué hacer ahora</b><br>Hidrátate bien y evita esfuerzos intensos durante 24 horas.</div>
+      <div class="mini"><b>¿Dónde donar?</b><br>Banco de Sangre del HRDC · horario y teléfono del servicio.</div>`;
+  };
+  $('#portalBtns').onclick = (e) => { const b = e.target.closest('[data-k]'); if (b) setPortal(b.dataset.k); }; setPortal('apto');
+  // roles
+  $('#roles').innerHTML = Object.keys(ROLES).map((r, i) => `<button class="btn ${i === 0 ? 'on' : ''}" data-r="${esc(r)}">${esc(r)}</button>`).join('');
+  const setRole = (r) => { $$('#roles .btn').forEach((b) => b.classList.toggle('on', b.dataset.r === r)); $('#roleBox').innerHTML = `<p class="t b">${esc(r)}</p><ul class="l">${ROLES[r].map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`; };
+  $('#roles').onclick = (e) => { const b = e.target.closest('[data-r]'); if (b) setRole(b.dataset.r); }; setRole('Enfermería');
+  // arquitectura
+  $('#arch').innerHTML = ARCH.map((a, i) => `<button class="node ${i === 2 ? 'on' : ''}" data-a="${i}"><b>${esc(a[0])}</b><span>${esc(a[1])}</span></button>`).join('');
+  const setArch = (i) => { $$('#arch .node').forEach((b, k) => b.classList.toggle('on', k === i)); $('#archAns').innerHTML = `<p class="b" style="font-size:calc(var(--u)*1.8)">${esc(ARCH[i][0])}</p><p class="t" style="font-size:calc(var(--u)*1.4)">${esc(ARCH[i][2])}</p>`; };
+  $('#arch').onclick = (e) => { const b = e.target.closest('[data-a]'); if (b) setArch(+b.dataset.a); }; setArch(2);
+  // capas
+  $('#layers').innerHTML = LAYERS.map((l, i) => `<button class="layer ${i === 2 ? 'on' : ''}" data-l="${i}"><i>${i + 1}</i><b>${esc(l[0])}</b></button>`).join('');
+  const setLayer = (i) => { $$('#layers .layer').forEach((b, k) => b.classList.toggle('on', k === i)); $('#layerAns').textContent = LAYERS[i][1]; };
+  $('#layers').onclick = (e) => { const b = e.target.closest('[data-l]'); if (b) setLayer(+b.dataset.l); }; setLayer(2);
+  // automatizaciones
+  $('#clock').innerHTML = AUTO.map((a, i) => `<button class="btn ${i === 1 ? 'on' : ''}" data-u="${i}"><b>${a[0]}</b><span>${esc(a[1])}</span></button>`).join('');
+  const setAuto = (i) => {
+    $$('#clock .btn').forEach((b, k) => b.classList.toggle('on', k === i)); const a = AUTO[i], m = a[3];
+    $('#autoAns').innerHTML = `<p class="b" style="font-size:calc(var(--u)*1.8)">${a[0]} · ${esc(a[1])}</p><p class="t" style="font-size:calc(var(--u)*1.4)">${esc(a[2])}</p>`;
+    $('#mailBox').innerHTML = `<small>${m[0]}</small><h5>${esc(m[1])}</h5><p>${esc(m[2])}</p>${m[3] ? `<span class="cta">${esc(m[3])}</span>` : ''}<p style="font-size:calc(var(--u)*.85);color:#7d8999">Recibes este correo porque autorizaste recibir mensajes del Banco de Sangre del HRDC.</p>`;
+  };
+  $('#clock').onclick = (e) => { const b = e.target.closest('[data-u]'); if (b) setAuto(+b.dataset.u); }; setAuto(1);
+  // gestion: cifras
+  $('#kHoras').textContent = D.horas; $('#kSem').textContent = D.semanas;
+  $('#edtList').innerHTML = `<ul class="l s">${D.fases.map((f) => `<li><b>${f.k}. ${esc(f.nombre)}</b>: ${f.acts.length} actividades, ${f.h} h</li>`).join('')}</ul><p class="s">${D.n_act} actividades en total.</p>`;
+  buildTimeline(); buildEvm(); buildRisks(); buildStake(); buildQuality(); buildTeam();
+  $('#lessons').innerHTML = LESSONS.map((l) => `<div class="card amber col" style="gap:calc(var(--u)*.5)"><p class="b t">${esc(l[0])}</p><p class="s"><b>Pasó:</b> ${esc(l[1])}</p><p class="s"><b>Aprendimos:</b> ${esc(l[2])}</p></div>`).join('');
+}
+
+function buildTimeline() {
+  const t0 = new Date('2026-07-20').getTime(), span = 12 * 7 * 864e5, pct = (iso) => ((new Date(iso).getTime() - t0) / span) * 100;
+  const cols = ['#5b8fc7', '#2c9d8a', '#c98a12', '#d9774a', '#8e5fb0'];
+  const rows = D.fases.map((f, i) => {
+    const l = pct(f.ini), w = Math.max(3, pct(f.fin) + 100 / 84 - l);
+    return `<div class="tlh"><b class="s" style="color:var(--ink)">${f.k}. ${esc(f.nombre)}</b><div class="lane"><button class="pbar ${i === 2 ? 'on' : ''}" data-f="${i}" style="left:${l}%;width:${w}%;background:${cols[i]}">${fd(f.ini)}–${fd(f.fin)}</button></div></div>`;
+  }).join('');
+  $('#tl').innerHTML = `<div class="tlh"><span></span><div class="weeks">${Array.from({ length: 12 }, (_, i) => `<span>S${i + 1}</span>`).join('')}</div></div>${rows}
+    <div class="tlh"><span class="s">Hitos</span><div class="lane" style="height:calc(var(--u)*2)">${D.hitos.map((h) => `<div class="ms" style="left:${pct(h.f) + 100 / 168}%" title="${esc(h.h + ' ' + h.n)}"><i></i></div>`).join('')}</div></div>`;
+  const setPhase = (i) => {
+    $$('#tl .pbar').forEach((b, k) => b.classList.toggle('on', k === i)); const f = D.fases[i];
+    $('#phaseBox').innerHTML = `<p class="t b">${f.k}. ${esc(f.nombre)} · ${f.h} h</p><table class="tb"><tbody>${f.acts.map((a) => `<tr style="${a.crit ? 'background:var(--bad-soft)' : ''}"><td class="num"><b>${a.id}</b></td><td>${esc(a.n)}</td><td class="num">${a.continua ? 'todo el proyecto' : fd(a.ini) + '–' + fd(a.fin)}</td><td>${a.crit ? '<span class="sig bad">crítica</span>' : ''}</td></tr>`).join('')}</tbody></table>`;
+  };
+  $('#tl').onclick = (e) => { const b = e.target.closest('[data-f]'); if (b) setPhase(+b.dataset.f); }; setPhase(2);
+  $('#ruta').textContent = D.ruta.join(' → ');
+  $('#hitos').innerHTML = D.hitos.map((h) => `<div class="s"><b>${h.h}</b> ${fd(h.f)} · ${esc(h.n)}</div>`).join('');
+}
+
+function buildEvm() {
+  const W = 640, H = 300, L = 56, R = 14, T = 22, B = 34, ymax = 12000;
+  const x = (s) => L + ((s - 1) / 11) * (W - L - R), y = (v) => H - B - (v / ymax) * (H - T - B);
+  const line = (k, col, dash) => { const pts = D.evm.filter((e) => e[k] !== null).map((e) => x(e.s) + ',' + y(e[k])); return `<polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="3" ${dash ? 'stroke-dasharray="6 5"' : ''} stroke-linejoin="round" stroke-linecap="round"/>`; };
+  let g = '';
+  for (let v = 0; v <= ymax; v += 3000) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="16" fill="var(--muted)">${v.toLocaleString('en-US')}</text>`;
+  for (let s = 1; s <= 12; s++) g += `<text x="${x(s)}" y="${H - 10}" text-anchor="middle" font-size="16" fill="var(--muted)">S${s}</text>`;
+  g += `<line x1="${L}" x2="${W - R}" y1="${y(D.bac)}" y2="${y(D.bac)}" stroke="var(--muted)" stroke-dasharray="4 4"/><text x="${L + 8}" y="${y(D.bac) - 5}" text-anchor="start" font-size="16" fill="var(--muted)">Presupuesto base ${money(D.bac)}</text>`;
+  g += `<line x1="${L}" x2="${W - R}" y1="${y(D.bac + D.cont)}" y2="${y(D.bac + D.cont)}" stroke="var(--warn)" stroke-dasharray="2 4"/><text x="${L + 8}" y="${y(D.bac + D.cont) - 5}" text-anchor="start" font-size="16" fill="var(--warn)">Con contingencia ${money(D.bac + D.cont)}</text>`;
+  g += line('pv', 'var(--navy)') + line('ev', 'var(--ok)') + line('ac', 'var(--rose)');
+  g += `<g font-size="16" font-weight="700"><rect x="${L + 10}" y="${T + 4}" width="12" height="4" fill="var(--navy)"/><text x="${L + 28}" y="${T + 12}" fill="var(--ink)">Planificado (PV)</text><rect x="${L + 175}" y="${T + 4}" width="12" height="4" fill="var(--ok)"/><text x="${L + 193}" y="${T + 12}" fill="var(--ink)">Ganado (EV)</text><rect x="${L + 305}" y="${T + 4}" width="12" height="4" fill="var(--rose)"/><text x="${L + 323}" y="${T + 12}" fill="var(--ink)">Costo real (AC)</text></g>`;
+  g += '<g id="evmark"></g>';
+  $('#evsvg').innerHTML = g;
+  const set = (w) => {
+    const e = D.evm[w - 1]; $('#wkLab').textContent = 'Semana ' + w + (w === 12 ? ' (aún sin datos reales)' : '');
+    const mk = [['pv', 'var(--navy)'], ['ev', 'var(--ok)'], ['ac', 'var(--rose)']].filter((m) => e[m[0]] !== null).map((m) => `<circle cx="${x(w)}" cy="${y(e[m[0]])}" r="6" fill="${m[1]}" stroke="var(--stage)" stroke-width="2"/>`).join('');
+    $('#evmark').innerHTML = `<line x1="${x(w)}" x2="${x(w)}" y1="${T}" y2="${H - B}" stroke="var(--ink)" stroke-opacity=".25"/>` + mk;
+    let k;
+    if (e.ev === null) k = `<div class="card kpi"><b>${money(e.pv)}</b><span>valor planificado</span></div><div class="card kpi"><b>—</b><span>el proyecto cierra esta semana</span></div>`;
+    else {
+      const spi = e.ev / e.pv, cpi = e.ev / e.ac, tone = (v) => (v >= 0.98 ? 'ok' : v >= 0.9 ? 'warn' : 'bad');
+      k = `<div class="card kpi"><b>${spi.toFixed(2)}</b><span>SPI · cronograma <span class="sig ${tone(spi)}">${spi >= 0.98 ? 'al día' : spi >= 0.9 ? 'atraso leve' : 'atrasado'}</span></span></div>
+        <div class="card kpi"><b>${cpi.toFixed(2)}</b><span>CPI · costo <span class="sig ${tone(cpi)}">${cpi >= 0.98 ? 'en presupuesto' : cpi >= 0.9 ? 'sobrecosto leve' : 'sobrecosto'}</span></span></div>
+        <div class="card kpi"><b style="font-size:calc(var(--u)*1.9)">${money(e.ev)}</b><span>valor ganado de ${money(e.pv)} planificado</span></div>
+        <div class="card kpi"><b style="font-size:calc(var(--u)*1.9)">${money(e.ac)}</b><span>costo real acumulado</span></div>`;
+    }
+    $('#evk').innerHTML = k;
+  };
+  $('#wk').oninput = (e) => set(+e.target.value); set(D.s_corte);
+  const i = D.ind[String(D.s_corte)];
+  $('#presu').innerHTML = `<tbody><tr><td>Recursos humanos (${D.horas} h × S/ 8)</td><td class="num">${money(D.rrhh)}</td></tr><tr><td>Gastos directos</td><td class="num">${money(D.gastos)}</td></tr><tr><td><b>Presupuesto base</b></td><td class="num"><b>${money(D.bac)}</b></td></tr><tr><td>Reserva de contingencia (VME)</td><td class="num">${money(D.cont)}</td></tr><tr><td>Reserva de gestión (3 %)</td><td class="num">${money(D.gest)}</td></tr><tr><td><b>Total</b></td><td class="num"><b>${money(D.total)}</b></td></tr><tr><td>Costo final proyectado</td><td class="num">${money(i.eac1)}</td></tr></tbody>`;
+}
+
+function buildRisks() {
+  let filtro = 'all', sel = D.riesgos[0].id;
+  const cls = (pi) => (pi >= 10 ? 'r' : pi >= 5 ? 'y' : 'g');
+  const draw = () => {
+    let h = '';
+    for (let p = 5; p >= 1; p--) {
+      h += `<div class="rlab">${p}</div>`;
+      for (let im = 1; im <= 5; im++) {
+        const rs = D.riesgos.filter((r) => r.p === p && r.i === im && (filtro === 'all' || r.tipo === filtro));
+        h += `<div class="rcell ${cls(p * im)}">${rs.map((r) => `<button class="rk ${r.tipo === 'Oportunidad' ? 'op' : ''} ${r.id === sel ? 'sel' : ''}" data-r="${r.id}">${r.id}</button>`).join('')}</div>`;
+      }
+    }
+    h += '<div></div>' + [1, 2, 3, 4, 5].map((i) => `<div class="rlab" style="text-align:center">${i}</div>`).join('');
+    $('#rgrid').innerHTML = h;
+    const r = D.riesgos.find((x) => x.id === sel);
+    $('#riskBox').innerHTML = `<p class="s b" style="color:var(--navy)">${r.id} · ${r.tipo} · probabilidad ${r.p} × impacto ${r.i} = ${r.pi}</p><p class="t b" style="font-size:calc(var(--u)*1.5)">${esc(r.corto)}</p>
+      <p class="s"><b>Estrategia:</b> ${esc(r.est)} · <b>Dueño:</b> ${esc(r.dueno)}</p><p class="s"><b>Qué hacemos:</b> ${esc(r.acc)}</p><p class="s"><b>Señal de alerta:</b> ${esc(r.trig)}</p>
+      ${r.vme ? `<p class="s"><b>VME:</b> ${money(r.vme)}</p>` : ''}${r.estado !== 'Vigente' ? `<p class="sig warn">${esc(r.estado)}</p>` : ''}`;
+  };
+  $('#rgrid').onclick = (e) => { const b = e.target.closest('[data-r]'); if (b) { sel = b.dataset.r; draw(); } };
+  $$('[data-f]', $('#shell')).filter((b) => b.closest('.slide') === slides[14]).forEach((b) => b.addEventListener('click', () => { filtro = b.dataset.f; $$('[data-f]', slides[14]).forEach((c) => c.classList.toggle('on', c === b)); draw(); }));
+  $('#vmeTot').textContent = money(D.cont);
+  draw();
+}
+
+function buildStake() {
+  const rs = { all: 'all' };
+  let capa = 'all', sel = 'S08';
+  const place = {}; const dots = D.interesados.map((s) => {
+    const key = s.interes + '-' + s.poder; const n = (place[key] = (place[key] || 0) + 1) - 1;
+    const dx = [0, -.3, .3, -.15, .15, 0][n % 6], dy = [0, .12, .12, -.2, -.2, .3][n % 6];
+    return { s, x: ((s.interes + dx - 0.5) / 5) * 100, y: ((s.poder + dy - 0.5) / 5) * 100 };
+  });
+  const draw = () => {
+    const q = (cl, t, st) => `<div class="q" style="${st}">${t}</div>`;
+    let h = q('', 'Mantener satisfecho', 'left:0;top:0;align-items:flex-start') + q('', 'Gestionar de cerca', 'right:0;top:0;justify-content:flex-end;align-items:flex-start;text-align:right') +
+      q('', 'Monitorear', 'left:0;bottom:0;align-items:flex-end') + q('', 'Mantener informado', 'right:0;bottom:0;justify-content:flex-end;align-items:flex-end;text-align:right');
+    h += '<div style="position:absolute;left:0;right:0;top:50%;border-top:1px dashed var(--line)"></div><div style="position:absolute;top:0;bottom:0;left:50%;border-left:1px dashed var(--line)"></div>';
+    h += dots.map((d) => { const cl = d.s.actitud === 'Apoya' ? 'apoya' : d.s.actitud === 'Neutral' ? 'neutral' : 'resist'; const dim = capa !== 'all' && d.s.actitud !== capa;
+      return `<button class="dotb ${cl} ${dim ? 'dim' : ''} ${d.s.id === sel ? 'sel' : ''}" data-s="${d.s.id}" style="left:${d.x}%;bottom:${d.y}%" aria-label="${esc(d.s.nombre)}">${d.s.id.slice(1)}</button>`; }).join('');
+    h += '<span class="ax" style="left:50%;bottom:2px;transform:translateX(-50%)">Interés →</span><span class="ax" style="left:2px;top:50%;transform:translateY(-50%) rotate(-90deg);transform-origin:center;writing-mode:horizontal-tb">Poder →</span>';
+    $('#plane').innerHTML = h;
+    const s = D.interesados.find((x) => x.id === sel);
+    $('#stBox').innerHTML = `<p class="s b" style="color:var(--navy)">${s.id} · ${esc(s.actitud)} · ${esc(s.estrategia)}</p><p class="t b" style="font-size:calc(var(--u)*1.6)">${esc(s.nombre)}</p><p class="s">${esc(s.rol)} · ${esc(s.org)}</p>
+      <p class="t"><b>Poder ${s.poder}/5.</b> ${esc(s.pq_poder)}</p><p class="t"><b>Interés ${s.interes}/5.</b> ${esc(s.pq_interes)}</p><p class="s"><b>Espera:</b> ${esc(s.exp)}</p>`;
+  };
+  $('#plane').onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) { sel = b.dataset.s; draw(); } };
+  $$('[data-a]', slides[15]).forEach((b) => b.addEventListener('click', () => { capa = b.dataset.a; $$('[data-a]', slides[15]).forEach((c) => c.classList.toggle('on', c === b)); draw(); }));
+  draw();
+}
+
+function buildQuality() {
+  const W = 640, rowH = 38, L = 300, T = 10, tot = D.defectos.reduce((a, d) => a + d.v, 0), max = Math.max(...D.defectos.map((d) => d.v)), bw = 230;
+  let acc = 0, g = '';
+  D.defectos.forEach((d, i) => {
+    const y = T + i * rowH, w = (d.v / max) * bw; const antes = acc; acc += d.v; const pct = Math.round((acc / tot) * 100);
+    g += `<text x="${L - 10}" y="${y + 22}" text-anchor="end" font-size="16" fill="var(--ink)">${esc(d.n)}</text><rect x="${L}" y="${y + 4}" width="${w}" height="${rowH - 12}" rx="5" fill="${antes < tot * .8 ? 'var(--rose)' : 'var(--line)'}"/>
+      <text x="${L + w + 8}" y="${y + 22}" font-size="16" font-weight="700" fill="var(--ink)">${d.v}</text><text x="${W - 4}" y="${y + 22}" text-anchor="end" font-size="14" fill="var(--muted)">${pct} %</text>`;
+  });
+  const hh = T + D.defectos.length * rowH + 22;
+  g += `<text x="${W - 4}" y="${hh - 4}" text-anchor="end" font-size="13" fill="var(--muted)">% acumulado</text>`;
+  $('#pareto').setAttribute('viewBox', `0 0 ${W} ${hh}`);
+  $('#pareto').innerHTML = g;
+  $('#kCoq').textContent = money(D.coq.tot); $('#kCoqP').textContent = (D.coq.pct_bac * 100).toFixed(0) + ' %';
+}
+
+function buildTeam() {
+  $('#team').innerHTML = D.equipo.map((p) => `<div class="card person"><div class="ava">${esc(p.corto[0])}</div><b>${esc(p.nombre)}</b><span>${esc(p.rol)}</span><span class="num">${p.h} h planificadas</span></div>`).join('');
+  const head = '<thead><tr><th>Entregable</th>' + D.cols.map((c) => `<th>${c}</th>`).join('') + '</tr></thead>';
+  $('#raci').innerHTML = head + '<tbody>' + D.raci.map((r) => `<tr><td>${esc(r.n)}</td>${D.cols.map((c) => `<td><b style="color:${r[c].includes('A') ? 'var(--rose)' : r[c].includes('R') ? 'var(--navy)' : 'var(--muted)'}">${r[c]}</b></td>`).join('')}</tr>`).join('') + '</tbody>';
+}
+
+/* ---------- video ---------- */
+(function video() {
+  const v = $('#demoVideo'), dz = $('#dropz'), inp = $('#videoFile'), lnk = $('#vidLink'), open = $('#vidOpen');
+  const load = (src) => { v.src = src; v.hidden = false; dz.hidden = true; };
+  v.addEventListener('error', () => { if (v.src && v.src.indexOf('blob:') !== 0) { v.hidden = true; dz.hidden = false; } });
+  v.addEventListener('loadeddata', () => { if (v.src) { v.hidden = false; dz.hidden = true; } });
+  v.src = 'demo.mp4';
+  inp.addEventListener('change', () => { if (inp.files[0]) load(URL.createObjectURL(inp.files[0])); });
+  ['dragenter', 'dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('over'); }));
+  dz.addEventListener('drop', (e) => { const f = e.dataTransfer.files[0]; if (f && f.type.indexOf('video') === 0) load(URL.createObjectURL(f)); });
+  const setLink = (u) => { if (/^https?:\/\//i.test(u)) { open.href = u; open.hidden = false; store.set('hx-vid', u); } else open.hidden = true; };
+  lnk.addEventListener('input', () => setLink(lnk.value.trim()));
+  const saved = store.get('hx-vid'); if (saved) { lnk.value = saved; setLink(saved); }
+})();
+
+buildNav(); build();
+const t = store.get('hx-theme'); if (t) document.documentElement.dataset.theme = t;
+const hash = parseInt((location.hash || '').replace('#s', ''), 10);
+show(hash >= 1 && hash <= N ? hash - 1 : 0, false);
+</script>
