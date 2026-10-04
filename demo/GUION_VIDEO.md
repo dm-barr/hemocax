@@ -1,8 +1,24 @@
-# Guion del video de HEMOCAX (≈ 12–14 min)
+# Guion del video de HEMOCAX (máx. 20 min)
 
 Todo se graba en el sistema real (https://hemocax.vercel.app) con cuentas y donantes **DEMO**.
 Las cuentas y contraseñas están en `demo/CREDENCIALES_DEMO.txt`.
 Cuando termines de grabar, ejecuta `node demo/limpiar-demo.js` (borra todo lo DEMO).
+
+---
+
+## Tiempos (límite: 20 min)
+
+| Parte | Escenas | Tiempo |
+|---|---|---|
+| Introducción e ingreso | 1–2 | 1 min |
+| A. Enfermería | 3–9 | 6 min |
+| B. Médico | 10–15 | 6 min |
+| C. Administrador | 16–20 | 4,5 min |
+| D. Donante | 21–24 | 3 min |
+| E. Automatización y cierre | 25–27 | 2 min |
+| **Total** | | **≈ 22 min hablando con calma** |
+
+Los tiempos de cada escena son *con pausas*. Si grabas fluido y corriges al editar, queda en 16–18 min. **Para no pasarte de 20:** si vas largo, quita primero las escenas 6, 9, 12, 20 y 23 (ahorran ≈ 3 min). Las **escenas extra** del final solo úsalas si te sobra tiempo.
 
 ---
 
@@ -253,13 +269,29 @@ Muestra la bandeja de `hemocax26@gmail.com` con los correos de la campaña y el 
 
 ---
 
+## Escenas extra (solo si te sobra tiempo; ≈ 3 min en total)
+
+**E1 — Objetivos del proyecto (1 min 30 s).** Muestra en el README de GitHub la tabla «Objetivos específicos OE-01 a OE-07».
+
+> «Cada objetivo del proyecto tiene su función en el sistema: registro de donantes y donaciones, control de máximos e intervalos, resultados con control de acceso, comunicación por correo con consentimiento, automatizaciones y reportes. Esta tabla relaciona cada objetivo con la pantalla que lo cumple.»
+
+**E2 — Panel de personal en el celular (45 s).** Entra como enfermería con el modo celular (375 px) y busca a un donante.
+
+> «El panel del personal también funciona desde el celular, por si el equipo atiende en una campaña fuera del hospital.»
+
+**E3 — Seguridad de los datos (45 s).** Muestra el diagrama de seguridad del README o explica en pantalla de «Actividad».
+
+> «Los permisos se aplican en la base de datos, no solo en la pantalla: un donante solo puede ver sus propios datos, un resultado crítico no es legible para él ni por error, y la enfermería no puede liberar resultados ni crear cuentas. Los cambios importantes quedan en la bitácora.»
+
+---
+
 ## Consejos de edición
 
 - Habla pausado; es mejor grabar por escenas y unirlas.
 - Si te equivocas, no repitas todo: haz una pausa de 3 segundos, repite la frase y corta después.
 - Acelera (1.5×) los momentos de espera o de escritura.
 - Difumina: la tabla de «Cuentas de acceso» y cualquier nombre real que aparezca.
-- Duración total estimada: 12–14 min. Si debe ser más corto, deja afuera las escenas 6, 9, 12, 20 y 23.
+- Duración: ver el cuadro de tiempos del inicio (máximo 20 min).
 
 ## Al terminar
 
