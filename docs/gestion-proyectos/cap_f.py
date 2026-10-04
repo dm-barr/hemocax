@@ -37,7 +37,7 @@ def pmbok7(doc):
         ["8", "Incorporar la calidad en los procesos y entregables", "Plan de calidad, pruebas por rol, revisión entre pares y lista de verificación de despliegue."],
         ["9", "Navegar en la complejidad", "Separación de responsabilidades (quién decide y quién envía) y reglas críticas en la base de datos."],
         ["10", "Optimizar las respuestas a los riesgos", "VME para fundamentar la contingencia; respuestas con dueño y disparador; riesgo R05 gestionado cuando se materializó."],
-        ["11", "Adoptar la adaptabilidad y la resiliencia", "El reloj se vigila con un monitor externo; se recuperó el plazo tras el atraso de las semanas 6 a 9."],
+        ["11", "Adoptar la adaptabilidad y la resiliencia", "El reloj se vigilará con un monitor externo (recomendado); se recuperó el plazo tras el atraso de las semanas 6 a 9."],
         ["12", "Permitir el cambio para lograr el estado futuro previsto", "Capacitación, ayuda integrada por puesto y plan de transferencia para que el Banco de Sangre adopte el sistema."],
     ], anchos=[0.9, 5.2, 10.5], alinear=["c", "l", "l"], tam=8.5, titulo="Principios del PMBOK 7 y evidencia")
 

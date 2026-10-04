@@ -276,7 +276,7 @@ def comunicaciones(doc):
            f"**Avance:** {pct(p11['pct'])} del valor planificado ({s(p11['ev'])} de {s(D.BAC)})\n"
            f"**Cronograma:** SPI {p11['spi']:.2f} (SV {s(p11['sv'])}) — el plazo se recuperó\n"
            f"**Costo:** CPI {p11['cpi']:.2f} (CV {s(p11['cv'])}) — EAC {s(p11['eac1'])}; cubierto con {pct(-p11['vac'] / D.RESERVA_CONTINGENCIA)} de la contingencia\n"
-           f"**Riesgo crítico:** R04 límites de planes gratuitos (exposición 12) — monitoreo externo activo\n"
+           f"**Riesgo crítico:** R04 límites de planes gratuitos (exposición 12) — monitoreo externo por configurar\n"
            f"**Próximos hitos:** informe final (02/10) · acta de cierre ({f(D.FIN_PLAN)})\n"
            f"**Decisión requerida del sponsor:** aprobar el uso de la contingencia ({s(-p11['vac'])}) y definir con la Dirección el costo recurrente.",
            titulo="Modelo de informe ejecutivo (datos al corte)", color="F4F6F7")
@@ -383,7 +383,7 @@ def riesgos(doc):
         ["R05 · Bloqueo de correo (SMTP) en el alojamiento", "**Se materializó en la semana 9:** el reloj alojado en el plan gratuito no podía enviar correos.", "Se movió el envío al portal; el reloj quedó solo como planificador. Costo: 16 horas de rehacer (CoQ, fallas internas)."],
         ["R02 · Cambios de requisitos", "Se registraron cambios de alcance durante el desarrollo (SCR-01 a SCR-09, capítulo 14).", "Proceso de control de cambios; sin impacto mayor al sponsor."],
         ["R01 · Indisponibilidad de integrantes", "Sobrecarga en las semanas 8 a 10 (histograma de recursos).", "Reasignación de tareas y horas extra; fue la causa principal del CPI < 1."],
-        ["R04 · Límites de planes gratuitos", "En seguimiento; sin interrupciones.", "Monitor externo de disponibilidad y registro de consumo."],
+        ["R04 · Límites de planes gratuitos", "En seguimiento; sin interrupciones.", "Monitor externo de disponibilidad (por configurar) y registro de consumo."],
     ], anchos=[4.6, 6.2, 5.8], tam=8.5, titulo="Riesgos materializados o con eventos")
     U.h3(doc, "Riesgo residual")
     filas = []

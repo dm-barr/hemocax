@@ -66,7 +66,7 @@ def _campo(par, instruccion, texto_previo=""):
     return run
 
 
-def pie_y_encabezado(doc, titulo_corto):
+def pie_y_encabezado(doc, titulo_corto, encabezado="Universidad Nacional de Cajamarca · EPIS · Gestión de Proyectos de Sistemas I · 2026-I"):
     for sec in doc.sections:
         sec.header.is_linked_to_previous = False
         sec.footer.is_linked_to_previous = False
@@ -74,7 +74,7 @@ def pie_y_encabezado(doc, titulo_corto):
         for r in list(hp.runs):
             r._r.getparent().remove(r._r)
         hp.text = ""
-        r = hp.add_run("Universidad Nacional de Cajamarca · EPIS · Gestión de Proyectos de Sistemas I · 2026-I")
+        r = hp.add_run(encabezado)
         r.font.size = Pt(8); r.font.color.rgb = RGBColor(0x7F, 0x8C, 0x8D)
         hp.alignment = WD_ALIGN_PARAGRAPH.LEFT
         fp = sec.footer.paragraphs[0]
@@ -307,3 +307,29 @@ def firmas(doc, firmantes):
         r = p2.add_run(nombre + "\n"); r.bold = True; r.font.size = Pt(9)
         r = p2.add_run(cargo); r.font.size = Pt(8.5)
     doc.add_paragraph()
+
+
+def codigo(doc, texto, tam=7.5, titulo=None):
+    """Bloque de código con fuente monoespaciada."""
+    if titulo:
+        pc = doc.add_paragraph()
+        r = pc.add_run(titulo); r.bold = True; r.font.size = Pt(9); r.font.color.rgb = AZUL
+        pc.paragraph_format.keep_with_next = True
+        pc.paragraph_format.space_after = Pt(2)
+    t = doc.add_table(rows=1, cols=1)
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    _bordes(t, "C5CED8")
+    _margenes_celda(t, 60, 60, 110, 110)
+    c = t.rows[0].cells[0]
+    c.width = Cm(ancho_util(doc))
+    _sombrear(c, "F4F6F7")
+    lineas = texto.strip(chr(10)).split(chr(10))
+    for k, ln in enumerate(lineas):
+        p = c.paragraphs[0] if k == 0 else c.add_paragraph()
+        p.paragraph_format.space_after = Pt(0)
+        p.paragraph_format.line_spacing = 1.0
+        r = p.add_run(ln if ln else " ")
+        r.font.name = "Consolas"
+        r._element.rPr.rFonts.set(qn("w:eastAsia"), "Consolas")
+        r.font.size = Pt(tam)
+    doc.add_paragraph().paragraph_format.space_after = Pt(3)

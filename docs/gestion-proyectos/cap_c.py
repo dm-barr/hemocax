@@ -287,7 +287,7 @@ def calidad(doc):
         ["3", "Las variables de entorno están cargadas y las claves privadas solo en el servidor.", "☑"],
         ["4", "La prueba con cuenta de donante no accede a críticos, plantillas ni bitácora.", "☑"],
         ["5", "El modo de envío está en simulación hasta aprobar las plantillas.", "☑"],
-        ["6", "El monitor externo consulta /health y el reloj responde.", "☑"],
+        ["6", "El reloj responde en /health (monitor externo recomendado, por configurar).", "☑"],
         ["7", "Los datos de prueba fueron eliminados.", "☑"],
         ["8", "El cambio quedó registrado en el control de versiones.", "☑"],
     ], anchos=[1.2, 13.0, 2.4], alinear=["c", "l", "c"], tam=9, titulo="Lista de verificación de despliegue")

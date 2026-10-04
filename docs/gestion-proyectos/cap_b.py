@@ -44,7 +44,7 @@ RF = [  # código, requisito, prioridad, OE, fuente, EDT, criterio de aceptació
 ]
 
 RNF = [
-    ("RNF-01", "Disponibilidad", "≥ 99 % mensual, vigilada por un monitor externo (/health cada 5 minutos).", "Alta"),
+    ("RNF-01", "Disponibilidad", "≥ 99 % mensual, con un monitor externo recomendado (/health cada 5 minutos).", "Alta"),
     ("RNF-02", "Rendimiento", "Portal del donante visible en ≤ 3 s en una red 4G; listas del personal en ≤ 2 s con 1 000 registros.", "Alta"),
     ("RNF-03", "Usabilidad rural", "Una sola pantalla, letra grande, íconos y colores; funciona en Android de gama baja; 1 columna en celular y 2 en escritorio.", "Alta"),
     ("RNF-04", "Seguridad", "Seguridad por filas (RLS) en todas las tablas; claves privadas solo en el servidor; HTTPS; sin auto-registro.", "Alta"),

@@ -123,7 +123,7 @@ def adquisiciones(doc):
     U.tabla(doc, ["Proveedor", "Cumplimiento", "Observación"], [
         ["Supabase", "Cumple", "Seguridad por filas, autenticación y base de datos estable en el plan gratuito; vigilar límite de 500 MB y pausa por inactividad."],
         ["Vercel", "Cumple", "Despliegue automático desde el repositorio; permite enviar correo desde el servidor."],
-        ["Render", "Cumple parcialmente", "Sirve como reloj, pero **bloquea la salida SMTP** en el plan gratuito y se duerme tras 15 minutos: se mitigó con un monitor externo."],
+        ["Render", "Cumple parcialmente", "Sirve como reloj, pero **bloquea la salida SMTP** en el plan gratuito y se duerme tras 15 minutos: se mitiga con un monitor externo (recomendado, por configurar)."],
         ["Correo (cuenta con contraseña de aplicación)", "Cumple con límite", "Límite diario de envíos suficiente para el piloto; no apto para campañas masivas."],
         ["Figma y GitHub", "Cumple", "Sin incidencias."],
     ], anchos=[4.0, 3.0, 9.6], tam=8.5, titulo="Evaluación de desempeño de proveedores")

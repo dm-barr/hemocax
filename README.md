@@ -604,7 +604,7 @@ Las RPC están concedidas solo a `authenticated` (`revoke … from public, anon`
 | Tabla | DONOR | STAFF | ADMIN |
 |---|---|---|---|
 | `profiles` | lee el suyo | lee el suyo | lee todos |
-| `donors` | lee y actualiza **solo** columnas de consentimiento del suyo | lee, crea y edita todos | igual que STAFF |
+| `donors` | lee el suyo y actualiza su consentimiento (⚠ ver nota H-01 abajo) | lee, crea y edita todos | igual que STAFF |
 | `donations` | lee las suyas | lee, crea y edita | igual |
 | `donation_results` | lee **solo** las suyas **liberadas y no críticas** | lee todas; cambios **solo vía RPC** | igual |
 | `campaigns` | lee las `ACTIVE` | lee y administra | igual |
@@ -620,7 +620,7 @@ Las RPC están concedidas solo a `authenticated` (`revoke … from public, anon`
 Detalles que importan:
 
 - `donation_results` tiene **`REVOKE UPDATE`** para `authenticated`: ningún usuario puede cambiar un resultado con `UPDATE` directo; solo pasan por las funciones anteriores.
-- `donors` tiene `GRANT UPDATE (consent_email, consent_at, consent_version, opted_out, preferred_channel)` para `authenticated`; combinado con la política `donors_update_own_consent`, el donante solo puede tocar esas columnas de su propia fila.
+- `donors` tiene `GRANT UPDATE (consent_email, consent_at, consent_version, opted_out, preferred_channel)` para `authenticated`; combinado con la política `donors_update_own_consent`, **la intención** es que el donante solo toque esas columnas de su propia fila. ⚠ **Hallazgo H-01 (04/10/2026):** el `GRANT` por columnas no restringe nada mientras exista el permiso de tabla completo que Supabase concede por defecto, y una prueba con una sesión de donante mostró que podía modificar el resto de su propia ficha (teléfono, estado, grupo sanguíneo). No alcanza a otros donantes. La corrección está lista en `supabase/migrations/20261004000400_restrict_donor_self_update.sql` (trigger que solo deja cambiar las columnas de consentimiento a quien no es personal) y fue probada en una transacción que se deshizo; **hasta aplicarla, esta restricción no se cumple**. Detalle en `docs/informe-tecnico/`.
 - No existen políticas de `DELETE` para usuarios: borrar datos solo es posible desde el servidor (clave de servicio) o con SQL directo.
 
 ---
