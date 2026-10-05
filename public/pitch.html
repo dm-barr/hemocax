@@ -851,13 +851,15 @@ function buildTeam() {
 }
 
 /* ---------- video ----------
-   Pega aquí el enlace de YouTube cuando esté listo (watch?v=…, youtu.be/… o /embed/…). */
-const VIDEO_URL = 'https://youtu.be/-Cz5J2LDSRc';
+   Pega aquí el enlace del video (YouTube: watch?v=…, youtu.be/…, /embed/…; o Google Drive: /file/d/…/view). */
+const VIDEO_URL = 'https://drive.google.com/file/d/1qB65WHvx6GsNgo8JFuYgjHA_RIYTeb7Z/view?usp=sharing';
 (function video() {
-  const m = VIDEO_URL.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
-  if (!m) return;
+  const yt = VIDEO_URL.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+  const dr = VIDEO_URL.match(/drive\.google\.com\/file\/d\/([\w-]+)/);
+  const src = yt ? `https://www.youtube-nocookie.com/embed/${yt[1]}?rel=0` : dr ? `https://drive.google.com/file/d/${dr[1]}/preview` : '';
+  if (!src) return;
   $('#dropz').hidden = true;
-  $('#vid').insertAdjacentHTML('beforeend', `<iframe src="https://www.youtube-nocookie.com/embed/${m[1]}?rel=0" title="Video de la simulación del software" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`);
+  $('#vid').insertAdjacentHTML('beforeend', `<iframe src="${src}" title="Video de la simulación del software" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="no-referrer"></iframe>`);
 })();
 
 buildNav(); build();
