@@ -45,6 +45,29 @@ def iso(d):
     return d.isoformat()
 
 
+TRELLO_ID = "lkTxpdjk"
+TRELLO_URL = "https://trello.com/b/" + TRELLO_ID
+
+
+def leer_trello():
+    """Foto del tablero público de Trello (si no hay internet usa la última guardada en trello.json)."""
+    import urllib.request
+    api = f"https://trello.com/1/boards/{TRELLO_ID}/lists?fields=name&cards=open&card_fields=name,labels"
+    try:
+        req = urllib.request.Request(api, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            crudo = json.loads(r.read().decode("utf-8"))
+        listas = [dict(n=l["name"], cards=[dict(n=c["name"], l=[x.get("name") or "" for x in c["labels"] if x.get("name")]) for c in l["cards"]]) for l in crudo]
+        foto = dict(url=TRELLO_URL, fecha=date.today().isoformat(), listas=listas)
+        with open("trello.json", "w", encoding="utf-8") as f:
+            json.dump(foto, f, ensure_ascii=False, indent=1)
+        return foto
+    except Exception as e:  # sin internet o tablero privado
+        print("Trello: usando la foto guardada (", e, ")")
+        with open("trello.json", encoding="utf-8") as f:
+            return json.load(f)
+
+
 def construir_datos():
     ev = []
     for f in D.EVM:
@@ -83,7 +106,7 @@ def construir_datos():
         raci=raci, cols=cap_d.COLS, equipo=equipo,
         coq=dict(tot=D.COQ_TOTAL, cat={k: D.COQ_COSTO[k] for k in D.COQ_CAT}, pct_bac=D.COQ_TOTAL / D.BAC, cb=D.CB_RATIO),
         defectos=[dict(n=n, v=v) for n, v in D.DEFECTOS],
-        n_act=len(D._A), ruta=[a["id"] for a in D._A if a.get("critica")],
+        n_act=len(D._A), ruta=[a["id"] for a in D._A if a.get("critica")], trello=leer_trello(),
     )
 
 

@@ -177,6 +177,17 @@ input[type=range]{width:100%;accent-color:var(--navy)}
 .person{display:flex;flex-direction:column;gap:2px}
 .person b{font-size:calc(var(--u)*1.25)}.person span{font-size:calc(var(--u)*1);color:var(--muted)}
 .ava{width:calc(var(--u)*3.2);height:calc(var(--u)*3.2);border-radius:50%;background:var(--navy);color:var(--stage);display:grid;place-items:center;font-weight:800;font-size:calc(var(--u)*1.3);margin-bottom:4px}
+/* kanban */
+.kb{flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,1fr);gap:calc(var(--u)*.8)}
+.kbc{display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:calc(var(--u)*.9);padding:calc(var(--u)*.7);gap:calc(var(--u)*.5)}
+.kbc h4{margin:0;display:flex;justify-content:space-between;font-size:calc(var(--u)*1.05);font-weight:800}
+.kbc h4 span{color:var(--muted);font-weight:700}
+.kbl{display:flex;flex-direction:column;gap:calc(var(--u)*.45);overflow:auto;min-height:0}
+.kbk{background:var(--stage);border:1px solid var(--line);border-radius:calc(var(--u)*.6);padding:calc(var(--u)*.55) calc(var(--u)*.65);font-size:calc(var(--u)*.92);line-height:1.3}
+.kbk.crit{border-left:4px solid var(--bad)}
+.kbk .lb{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px}
+.kbk .lb i{font-style:normal;font-size:calc(var(--u)*.78);font-weight:700;color:var(--muted);background:var(--panel);border-radius:999px;padding:0 calc(var(--u)*.5)}
+.kbk.dim{opacity:.2}
 /* notas, indice */
 #over{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 92%,transparent);z-index:30;overflow:auto;padding:16px}
 #over .gr{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:1200px;margin:0 auto}
@@ -185,6 +196,7 @@ input[type=range]{width:100%;accent-color:var(--navy)}
 #over small{color:var(--muted);font-weight:700}
 /* modo documento en pantallas angostas */
 @media (max-width:860px){
+  .kb{grid-template-columns:1fr}
   .shell{padding-inline:12px}
   .stage{--u:.62rem;aspect-ratio:auto;container-type:normal;width:100%;border-radius:12px}
   .slide{position:relative;inset:auto;overflow:visible;padding:18px 16px}
@@ -438,7 +450,19 @@ input[type=range]{width:100%;accent-color:var(--navy)}
   </div>
 </section>
 
-<!-- 14 COSTOS -->
+<!-- 14 TRELLO -->
+<section class="slide gestion" data-sec="g" data-title="Tablero Kanban">
+  <p class="eyebrow">Seguimiento · Tablero Kanban en Trello</p>
+  <h2 class="h" id="kbTitle" style="font-size:calc(var(--u)*3)">El avance del proyecto, tarea por tarea.</h2>
+  <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;flex:none" id="kbFilters"></div>
+  <div class="kb" id="kb"></div>
+  <div class="row" style="align-items:center;justify-content:space-between;flex-wrap:wrap;gap:calc(var(--u)*1);flex:none">
+    <p class="s" id="kbNote"></p>
+    <a class="btn" id="kbOpen" target="_blank" rel="noopener" style="text-decoration:none;color:var(--ink)">Abrir tablero en Trello ↗</a>
+  </div>
+</section>
+
+<!-- 15 COSTOS -->
 <section class="slide gestion" data-sec="g" data-title="Costos y valor ganado">
   <p class="eyebrow">Costos · Valor ganado (EVM)</p>
   <h2 class="h" style="font-size:calc(var(--u)*3)">Se pasó 5 % del presupuesto base y la reserva lo cubre.</h2>
@@ -624,7 +648,7 @@ const LESSONS = [
 const slides = $$('.slide');
 const N = slides.length;
 let cur = 0;
-const SECS = [['p', 'Producto', 0], ['g', 'Gestión', 10], ['c', 'Cierre', 19]];
+const SECS = [['p', 'Producto', 0], ['g', 'Gestión', 10], ['c', 'Cierre', 20]];
 function secOf(i) { return slides[i].dataset.sec; }
 function buildNav() {
   $('#secs').innerHTML = SECS.map((s) => `<button class="sec" role="tab" data-i="${s[2]}" data-s="${s[0]}">${s[1]}</button>`).join('');
@@ -720,8 +744,37 @@ function build() {
   // gestion: cifras
   $('#kHoras').textContent = D.horas; $('#kSem').textContent = D.semanas;
   $('#edtList').innerHTML = `<ul class="l s">${D.fases.map((f) => `<li><b>${f.k}. ${esc(f.nombre)}</b>: ${f.acts.length} actividades, ${f.h} h</li>`).join('')}</ul><p class="s">${D.n_act} actividades en total.</p>`;
-  buildTimeline(); buildEvm(); buildRisks(); buildStake(); buildQuality(); buildTeam();
+  buildTimeline(); buildKanban(); buildEvm(); buildRisks(); buildStake(); buildQuality(); buildTeam();
   $('#lessons').innerHTML = LESSONS.map((l) => `<div class="card amber col" style="gap:calc(var(--u)*.5)"><p class="b t">${esc(l[0])}</p><p class="s"><b>Pasó:</b> ${esc(l[1])}</p><p class="s"><b>Aprendimos:</b> ${esc(l[2])}</p></div>`).join('');
+}
+
+
+function buildKanban() {
+  const K = D.trello; let filtro = 'all', datos = K.listas, fuente = 'foto del ' + fd(K.fecha);
+  const total = () => datos.reduce((a, l) => a + l.cards.length, 0);
+  const draw = () => {
+    const labels = [...new Set(datos.flatMap((l) => l.cards.flatMap((c) => c.l)))];
+    const orden = ['Ruta Crítica', ...labels.filter((x) => x !== 'Ruta Crítica')];
+    $('#kbFilters').innerHTML = `<span class="s b">Filtrar:</span><button class="chip ${filtro === 'all' ? 'on' : ''}" data-k="all">Todas</button>` + orden.map((x) => `<button class="chip ${filtro === x ? 'on' : ''}" data-k="${esc(x)}">${esc(x)}</button>`).join('');
+    $('#kb').innerHTML = datos.map((l) => `<div class="kbc"><h4>${esc(l.n)}<span>${l.cards.length}</span></h4><div class="kbl">` + l.cards.map((c) => {
+      const dim = filtro !== 'all' && !c.l.includes(filtro);
+      return `<div class="kbk ${c.l.includes('Ruta Crítica') ? 'crit' : ''} ${dim ? 'dim' : ''}">${esc(c.n)}<div class="lb">${c.l.filter((x) => x !== 'Ruta Crítica').map((x) => `<i>${esc(x)}</i>`).join('')}</div></div>`;
+    }).join('') + '</div></div>').join('');
+    const fin = (datos.find((l) => /termin/i.test(l.n)) || { cards: [] }).cards.length;
+    $('#kbTitle').textContent = `${total()} tareas, ${fin} terminadas: así va el proyecto.`;
+    $('#kbNote').textContent = `Tablero público de Trello (${fuente}). Las tarjetas rojas están en la ruta crítica.`;
+  };
+  $('#kbOpen').href = K.url;
+  $('#kbFilters').onclick = (e) => { const b = e.target.closest('[data-k]'); if (b) { filtro = b.dataset.k; draw(); } };
+  draw();
+  // intenta traer el estado actual del tablero; si no hay conexión se queda la foto
+  try {
+    const id = K.url.split('/b/')[1];
+    fetch(`https://trello.com/1/boards/${id}/lists?fields=name&cards=open&card_fields=name,labels`).then((r) => (r.ok ? r.json() : Promise.reject())).then((j) => {
+      datos = j.map((l) => ({ n: l.name, cards: l.cards.map((c) => ({ n: c.name, l: c.labels.map((x) => x.name).filter(Boolean) })) }));
+      fuente = 'en vivo'; draw();
+    }).catch(() => {});
+  } catch (e) {}
 }
 
 function buildTimeline() {
@@ -795,7 +848,7 @@ function buildRisks() {
       ${r.vme ? `<p class="s"><b>VME:</b> ${money(r.vme)}</p>` : ''}${r.estado !== 'Vigente' ? `<p class="sig warn">${esc(r.estado)}</p>` : ''}`;
   };
   $('#rgrid').onclick = (e) => { const b = e.target.closest('[data-r]'); if (b) { sel = b.dataset.r; draw(); } };
-  $$('[data-f]', $('#shell')).filter((b) => b.closest('.slide') === slides[14]).forEach((b) => b.addEventListener('click', () => { filtro = b.dataset.f; $$('[data-f]', slides[14]).forEach((c) => c.classList.toggle('on', c === b)); draw(); }));
+  $$('[data-f]', $('#shell')).filter((b) => b.closest('.slide') === slides.find((x) => x.dataset.title === 'Riesgos')).forEach((b) => b.addEventListener('click', () => { filtro = b.dataset.f; $$('[data-f]', slides.find((x) => x.dataset.title === 'Riesgos')).forEach((c) => c.classList.toggle('on', c === b)); draw(); }));
   $('#vmeTot').textContent = money(D.cont);
   draw();
 }
@@ -823,7 +876,7 @@ function buildStake() {
       <p class="t"><b>Poder ${s.poder}/5.</b> ${esc(s.pq_poder)}</p><p class="t"><b>Interés ${s.interes}/5.</b> ${esc(s.pq_interes)}</p><p class="s"><b>Espera:</b> ${esc(s.exp)}</p>${s.cuello ? `<p class="t" style="color:var(--bad)"><b>Por qué frena el proyecto.</b> ${esc(s.pq_cuello)}</p>` : ''}`;
   };
   $('#plane').onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) { sel = b.dataset.s; draw(); } };
-  $$('[data-a]', slides[15]).forEach((b) => b.addEventListener('click', () => { capa = b.dataset.a; $$('[data-a]', slides[15]).forEach((c) => c.classList.toggle('on', c === b)); draw(); }));
+  $$('[data-a]', slides.find((x) => x.dataset.title === 'Interesados')).forEach((b) => b.addEventListener('click', () => { capa = b.dataset.a; $$('[data-a]', slides.find((x) => x.dataset.title === 'Interesados')).forEach((c) => c.classList.toggle('on', c === b)); draw(); }));
   draw();
 }
 

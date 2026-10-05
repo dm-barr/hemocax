@@ -1,0 +1,248 @@
+{
+ "url": "https://trello.com/b/lkTxpdjk",
+ "fecha": "2026-10-04",
+ "listas": [
+  {
+   "n": "Backlog",
+   "cards": [
+    {
+     "n": "4.2 Pruebas funcionales y de integración",
+     "l": [
+      "QA"
+     ]
+    },
+    {
+     "n": "4.3 Pruebas de seguridad de datos y permisos por rol",
+     "l": [
+      "QA"
+     ]
+    },
+    {
+     "n": "4.4 Piloto interno con cuentas de cada rol",
+     "l": [
+      "QA",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "4.5 Correcciones posteriores a las pruebas",
+     "l": [
+      "Integraciones"
+     ]
+    },
+    {
+     "n": "4.6 Manuales, ayuda integrada y documentación técnica",
+     "l": [
+      "Analista Funcional"
+     ]
+    },
+    {
+     "n": "4.7 Capacitación: guion y video de demostración",
+     "l": [
+      "Analista Funcional",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "5.1 Informe final y lecciones aprendidas",
+     "l": [
+      "PM",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "5.2 Entrega de repositorio y documentación técnica",
+     "l": [
+      "Líder Técnico"
+     ]
+    },
+    {
+     "n": "5.3 Acta de cierre y de aceptación",
+     "l": [
+      "PM",
+      "Ruta Crítica"
+     ]
+    }
+   ]
+  },
+  {
+   "n": "Por Hacer",
+   "cards": [
+    {
+     "n": "3.3 Importación masiva desde Excel/CSV",
+     "l": [
+      "Frontend"
+     ]
+    },
+    {
+     "n": "3.5 Resultados: liberación, marca de crítico y aviso",
+     "l": [
+      "Líder Técnico",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "3.6 Consentimiento versionado y derechos del titular ARCO",
+     "l": [
+      "Líder Técnico"
+     ]
+    },
+    {
+     "n": "3.8 Automatizaciones diarias (cumpleaños, recordatorios)",
+     "l": [
+      "Integraciones"
+     ]
+    }
+   ]
+  },
+  {
+   "n": "En Progreso",
+   "cards": [
+    {
+     "n": "1.5 Dirección y seguimiento del proyecto",
+     "l": [
+      "PM"
+     ]
+    },
+    {
+     "n": "3.7 Correo institucional, plantillas y campañas",
+     "l": [
+      "Integraciones"
+     ]
+    },
+    {
+     "n": "4.1 Plan de pruebas",
+     "l": [
+      "QA"
+     ]
+    }
+   ]
+  },
+  {
+   "n": "Pruebas/Revisión",
+   "cards": [
+    {
+     "n": "3.4 Registro de donaciones y reglas de máximo anual/intervalo",
+     "l": [
+      "Líder Técnico",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "3.9 Portal del donante adaptado para zonas rurales",
+     "l": [
+      "Frontend"
+     ]
+    },
+    {
+     "n": "3.10 Panel del personal: reportes, cuentas y parámetros",
+     "l": [
+      "Frontend",
+      "Ruta Crítica"
+     ]
+    }
+   ]
+  },
+  {
+   "n": "Terminado",
+   "cards": [
+    {
+     "n": "1.1 Redacción y aprobación del Project Charter",
+     "l": [
+      "PM",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "3.2 Padrón de donantes y ficha",
+     "l": [
+      "Frontend"
+     ]
+    },
+    {
+     "n": "3.11 Despliegue en producción en Vercel, Supabase, Render",
+     "l": [
+      "Integraciones",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "1.2 Registro y análisis de stakeholders",
+     "l": [
+      "Analista Funcional"
+     ]
+    },
+    {
+     "n": "1.3 Reunión de inicio (kick-off) con equipo y sponsor",
+     "l": [
+      "PM"
+     ]
+    },
+    {
+     "n": "1.4 Reunión inicial con la Jefatura del Banco de Sangre",
+     "l": [
+      "PM",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "2.1 Entrevistas y talleres de requisitos con el Banco de Sangre",
+     "l": [
+      "Analista Funcional",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "2.2 Documentación de requisitos y Scope Statement",
+     "l": [
+      "Analista Funcional"
+     ]
+    },
+    {
+     "n": "2.3 Wireframes y prototipos de alta fidelidad en Figma",
+     "l": [
+      "Frontend"
+     ]
+    },
+    {
+     "n": "2.4 Validación de prototipos con el personal",
+     "l": [
+      "Analista Funcional"
+     ]
+    },
+    {
+     "n": "2.5 EDT, cronograma y línea base de costos",
+     "l": [
+      "PM"
+     ]
+    },
+    {
+     "n": "2.6 Planes de calidad, riesgos, RR.HH., comunicaciones y adquisiciones",
+     "l": [
+      "PM"
+     ]
+    },
+    {
+     "n": "2.7 Diseño de arquitectura y modelo de datos ERD y seguridad",
+     "l": [
+      "Líder Técnico",
+      "Ruta Crítica"
+     ]
+    },
+    {
+     "n": "2.8 Propuesta formal al HRDC",
+     "l": [
+      "PM"
+     ]
+    },
+    {
+     "n": "3.1 Esquema de base de datos, seguridad RLS, triggers y funciones",
+     "l": [
+      "Líder Técnico",
+      "Ruta Crítica"
+     ]
+    }
+   ]
+  }
+ ]
+}
